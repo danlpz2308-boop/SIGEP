@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGEP - Sistema de Gestión de Perfiles</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -66,13 +67,38 @@
         #printArea .field-value { font-size: 10.5pt; font-weight: 600; color: #0f172a; margin-bottom: 8px; }
         #printArea .alias-val { font-size: 13pt; font-weight: 900; color: #dc2626; font-style: italic; }
         #printArea .nombre-val { font-size: 16pt; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-        #printArea .grupo-val { display: inline-block; background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 20px; font-size: 9pt; font-weight: 700; text-transform: uppercase; border: 1px solid #fecaca; }
+        #printArea .grupo-val { display: inline-block; background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 20px; font-size: 9pt; font-weight: 700; text-transform: uppercase; border: 1px solid #fca5a5; }
         #printArea .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         #printArea .obs-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px; margin-top: 12px; }
         #printArea .obs-box p { font-size: 9.5pt; color: #78350f; line-height: 1.5; white-space: pre-wrap; }
         #printArea .print-footer { margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 8px; display: flex; justify-content: space-between; font-size: 7pt; color: #94a3b8; }
         #printArea .curp-val { font-family: 'Courier New', monospace; font-size: 10pt; font-weight: 700; background: #f1f5f9; padding: 2px 6px; border-radius: 3px; }
         #printArea .confidential { color: #dc2626; font-weight: 900; font-size: 9pt; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Estilos para red organizacional */
+        .org-tree svg { font-family: Arial, sans-serif; }
+        .org-tree .node circle { stroke-width: 2px; cursor: pointer; }
+        .org-tree .node text { font-size: 11px; text-anchor: middle; pointer-events: none; }
+        .org-tree .link { stroke: #999; stroke-opacity: 0.6; stroke-width: 2px; fill: none; }
+        .org-node { 
+            display: inline-block;
+            border: 2px solid #1e293b;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 5px;
+            background: #f1f5f9;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .org-node:hover {
+            background: #e0e7ff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: scale(1.05);
+        }
+        .org-node-title { font-weight: bold; color: #0f172a; font-size: 13px; }
+        .org-node-puesto { font-size: 11px; color: #64748b; font-style: italic; }
+        .org-node-grupo { font-size: 10px; background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800">
@@ -85,16 +111,20 @@
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <a href="javascript:void(0)" id="navDirectorio" onclick="mostrarVista('directorio')" class="flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1"></path></svg>
                 <span class="font-medium">Directorio</span>
             </a>
             <a href="javascript:void(0)" id="navEstadisticas" onclick="mostrarVista('estadisticas')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6"></path></svg>
                 <span class="font-medium">Estadísticas</span>
             </a>
             <a href="javascript:void(0)" id="navRed" onclick="mostrarVista('red')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4"></path></svg>
                 <span class="font-medium">Mapa de Red</span>
+            </a>
+            <a href="javascript:void(0)" id="navOrganizacional" onclick="mostrarVista('organizacional')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
+                <span class="font-medium">Estructura Org.</span>
             </a>
 
             <div class="pt-4 pb-2">
@@ -102,12 +132,12 @@
             </div>
 
             <button onclick="exportarDatos()" class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0"></path></svg>
                 <span class="font-medium text-sm">Exportar Respaldo</span>
             </button>
 
             <label class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left cursor-pointer">
-                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0"></path></svg>
                 <span class="font-medium text-sm">Restaurar Respaldo</span>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importarDatos(event)">
             </label>
@@ -131,9 +161,9 @@
         <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0">
             <div class="relative w-full sm:w-96">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2"></path></svg>
                 </span>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre, alias, ocupación o grupo..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, alias, ocupación o grupo..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
             </div>
             <button onclick="abrirModalForm()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -176,7 +206,7 @@
                 <!-- Top Grupos -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
                     <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2"></path></svg>
                         Registros por Grupo Delictivo
                     </h3>
                     <div id="stat_grupos_lista" class="space-y-3"></div>
@@ -185,7 +215,7 @@
                 <!-- Top Zonas -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
                     <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657"></path></svg>
                         Registros por Zona de Operación
                     </h3>
                     <div id="stat_zonas_lista" class="space-y-3"></div>
@@ -196,7 +226,7 @@
                 <!-- Distribución de Edades -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
                     <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0"></path></svg>
                         Distribución por Rango de Edad
                     </h3>
                     <div id="stat_edades_lista" class="space-y-3"></div>
@@ -205,7 +235,7 @@
                 <!-- Top Funciones -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
                     <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255"></path></svg>
                         Funciones / Puestos más Frecuentes
                     </h3>
                     <div id="stat_funciones_lista" class="space-y-3"></div>
@@ -213,49 +243,44 @@
             </div>
         </div>
 
-        <!-- Vista Mapa de Red -->
+        <!-- Vista Mapa de Red (Gráfico de Nodos) -->
         <div id="vistaRed" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
             <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
                 <div class="bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-4 py-3 text-white shadow-xl">
                     <h2 class="text-sm font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172"></path></svg>
                         Mapa de Red
                     </h2>
                     <p id="redStats" class="text-xs text-slate-400">Cargando...</p>
                 </div>
-                <div class="bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-4 py-3 text-white shadow-xl">
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Filtrar por grupo</p>
-                    <div id="redLeyenda" class="flex flex-col gap-1.5 max-h-40 overflow-y-auto"></div>
-                </div>
-            </div>
-            <div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
-                <div class="bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-3 py-2 text-white shadow-xl">
-                    <p class="text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Buscar nodo</p>
-                    <div class="relative">
-                        <svg class="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/></svg>
-                        <input id="redBusqueda" type="text" placeholder="Nombre, alias o grupo..." oninput="aplicarFiltroTexto(this.value)" class="w-44 bg-slate-800 border border-slate-600 text-white text-xs rounded-lg pl-7 pr-7 py-1.5 focus:outline-none focus:border-indigo-400 placeholder-slate-500" autocomplete="off">
-                        <button onclick="document.getElementById('redBusqueda').value=''; aplicarFiltroTexto('');" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition text-xs leading-none">✕</button>
-                    </div>
-                    <div id="redBusquedaConteo" class="text-xs text-slate-500 mt-1 text-center hidden"></div>
-                </div>
-                <div class="bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-3 py-2 text-white shadow-xl">
-                    <p class="text-xs text-slate-500 mb-1.5">Controles</p>
-                    <div class="flex flex-col gap-1">
-                        <button onclick="redZoom(1.2)" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded font-bold transition">+ Acercar</button>
-                        <button onclick="redZoom(0.8)" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded font-bold transition">− Alejar</button>
-                        <button onclick="redCentrar()" class="text-xs bg-indigo-700 hover:bg-indigo-600 px-3 py-1.5 rounded font-bold transition mt-1">⟳ Centrar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="absolute bottom-4 left-4 z-10 bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-4 py-2 text-slate-500 text-xs shadow-xl">
-                Arrastra nodos · Rueda = zoom · Clic = abrir perfil
             </div>
             <canvas id="redCanvas" class="w-full h-full"></canvas>
-            <div id="redTooltip" class="hidden absolute bg-slate-900 text-white text-xs rounded-xl px-4 py-3 pointer-events-none shadow-2xl border border-slate-600 z-20" style="max-width:200px"></div>
             <div id="redVacio" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                <svg class="w-16 h-16 mb-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                <svg class="w-16 h-16 mb-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13.828 10.172"></path></svg>
                 <p class="text-lg font-bold text-slate-600">Sin vínculos registrados</p>
                 <p class="text-sm text-slate-700 mt-1">Edita un perfil y agrega vínculos para visualizarlos aquí.</p>
+            </div>
+        </div>
+
+        <!-- Vista Estructura Organizacional (Árbol Jerárquico) -->
+        <div id="vistaOrganizacional" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50">
+            <div class="px-6 py-4 border-b bg-white shadow-sm shrink-0 flex items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-black text-slate-800">Estructura Organizacional - Estilo FBI</h2>
+                    <p class="text-xs text-slate-500 mt-1">Visualización jerárquica de la organización criminal</p>
+                </div>
+                <select id="orgSelectGrupo" onchange="actualizarEstructuraOrganizacional()" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
+                    <option value="">Seleccionar grupo...</option>
+                </select>
+            </div>
+            <div id="orgTreeContainer" class="flex-1 overflow-auto p-6">
+                <div id="orgVacio" class="flex items-center justify-center h-full text-slate-500">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
+                        <p class="text-lg font-semibold">Selecciona un grupo para ver su estructura</p>
+                    </div>
+                </div>
+                <div id="orgTree"></div>
             </div>
         </div>
 
@@ -275,7 +300,7 @@
                     </tbody>
                 </table>
                 <div id="emptyState" class="hidden p-10 text-center text-gray-500">
-                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17"></path></svg>
                     <p class="text-lg font-medium text-gray-900">No hay registros</p>
                     <p class="mt-1">Agrega una persona o Importa un respaldo.</p>
                 </div>
@@ -303,7 +328,7 @@
                         <div class="flex flex-col items-center space-y-3 w-full md:w-48 shrink-0">
                             <div class="w-32 h-32 rounded-full border-4 border-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center relative group">
                                 <img id="previewFoto" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover hidden">
-                                <svg id="placeholderFoto" class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <svg id="placeholderFoto" class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7"></path></svg>
                                 <label class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center cursor-pointer text-white text-xs font-medium transition">
                                     Subir Foto
                                     <input type="file" id="fotoInput" accept="image/*" class="hidden">
@@ -315,12 +340,12 @@
                             <div class="col-span-1 md:col-span-2 lg:col-span-3 border-b pb-2 mb-2">
                                 <h3 class="text-lg font-semibold text-gray-800">Datos Personales</h3>
                             </div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre Completo *</label><input type="text" id="f_nombre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 uppercase font-semibold" required></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Alias / Apodo</label><input type="text" id="f_alias" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 text-red-600 font-semibold italic"></div>
+                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre Completo *</label><input type="text" id="f_nombre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
+                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Alias / Apodo</label><input type="text" id="f_alias" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Ocupación / Oficio</label><input type="text" id="f_ocupacion" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Fecha de Nacimiento</label><input type="date" id="f_fecha_nac" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500" onchange="calcularEdadForm()"></div>
+                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Fecha de Nacimiento</label><input type="date" id="f_fecha_nac" onchange="calcularEdadForm()" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Edad</label><input type="number" id="f_edad" class="w-full p-2 border rounded bg-gray-50" readonly></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">CURP</label><input type="text" id="f_curp" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 uppercase font-mono text-sm"></div>
+                            <div><label class="block text-xs font-bold text-gray-700 mb-1">CURP</label><input type="text" id="f_curp" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Estado Civil</label>
                                 <select id="f_estado_civil" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
@@ -342,7 +367,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre del Padre</label><input type="text" id="f_padre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre de la Madre</label><input type="text" id="f_madre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Hermanos</label><input type="text" id="f_hermanos" placeholder="Nombres separados por comas" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Hermanos</label><input type="text" id="f_hermanos" placeholder="Nombres separados por comas..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Domicilio de los Padres</label><input type="text" id="f_dom_padres" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Pareja Sentimental</label><input type="text" id="f_pareja" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             <div><label class="block text-xs font-bold text-gray-700 mb-1">Hijos (Edades/Nombres)</label><input type="text" id="f_hijos" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
@@ -353,8 +378,8 @@
                         <div>
                             <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Domicilio Actual</h3>
                             <div class="space-y-4">
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Dirección Completa</label><textarea id="f_domicilio" rows="2" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea></div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Descripción del Domicilio</label><textarea id="f_desc_domicilio" rows="2" placeholder="Color de fachada, tipo de reja, señas particulares..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea></div>
+                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Dirección Completa</label><textarea id="f_domicilio" rows="2" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea></div>
+                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Descripción del Domicilio</label><textarea id="f_desc_domicilio" rows="2" placeholder="Color de fachada, referencias..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea></div>
                                 <div><label class="block text-xs font-bold text-gray-700 mb-1">Tiempo habitando el domicilio</label><input type="text" id="f_tiempo_dom" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                             </div>
                         </div>
@@ -363,25 +388,25 @@
                             <h3 class="text-lg font-bold text-red-700 mb-4 border-b border-red-200 pb-2">Datos Operativos</h3>
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div class="col-span-2"><label class="block text-xs font-bold text-red-800 mb-1">Grupo Delictivo *</label><input type="text" id="f_grupo" class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500 bg-white font-bold text-red-900" required></div>
-                                    <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Función / Puesto</label><input type="text" id="f_funcion" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500 bg-white"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-bold text-red-800 mb-1">Grupo Delictivo *</label><input type="text" id="f_grupo" class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Función / Puesto</label><input type="text" id="f_funcion" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                                 </div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Zona de Operación</label><input type="text" id="f_zona" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500 bg-white"></div>
+                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Zona de Operación</label><input type="text" id="f_zona" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500"></div>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Mando Directo (Jefe)</label><input type="text" id="f_mando" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500 bg-white"></div>
-                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Sueldo / Ingreso Est.</label><input type="text" id="f_sueldo" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500 bg-white text-green-700 font-semibold"></div>
+                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Mando Directo (Jefe)</label><input type="text" id="f_mando" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
+                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Sueldo / Ingreso Est.</label><input type="text" id="f_sueldo" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                                 </div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Antigüedad en la organización</label><input type="text" id="f_antiguedad" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500 bg-white"></div>
+                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Antigüedad en la organización</label><input type="text" id="f_antiguedad" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
                                 <div class="bg-red-100 border border-red-300 rounded-lg p-3 flex items-center gap-3">
-                                    <input type="checkbox" id="f_orden_aprehension" class="w-5 h-5 accent-red-600 shrink-0 cursor-pointer">
+                                    <input type="checkbox" id="f_orden_aprehension" onchange="document.getElementById('f_orden_detalle_wrap').classList.toggle('hidden')" class="w-5 h-5 accent-red-600 shrink-0 cursor-pointer">
                                     <div>
                                         <label for="f_orden_aprehension" class="text-sm font-black text-red-800 cursor-pointer">Orden de Aprehensión Activa</label>
                                         <p class="text-xs text-red-600">Marcar si existe orden judicial vigente</p>
                                     </div>
                                 </div>
                                 <div id="f_orden_detalle_wrap" class="hidden">
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Detalles de la Orden (No., juzgado, delitos)</label>
-                                    <input type="text" id="f_orden_detalle" placeholder="Ej. OA-2024-0123, Juzgado 4°, homicidio calificado..." class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500 bg-white text-sm">
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Detalles de la Orden</label>
+                                    <input type="text" id="f_orden_detalle" placeholder="Ej. OA-2024-0123, Juzgado 4°..." class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500">
                                 </div>
                             </div>
                         </div>
@@ -389,18 +414,18 @@
 
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2 border-b pb-2">Observaciones Generales</h3>
-                        <textarea id="f_observaciones" rows="3" placeholder="Tatuajes, vehículos, antecedentes, notas de comportamiento..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500 resize-y"></textarea>
+                        <textarea id="f_observaciones" rows="3" placeholder="Tatuajes, vehículos, antecedentes..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
 
                     <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
                         <h3 class="text-lg font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172"></path></svg>
                             Vínculos con Registros SIGEP
                         </h3>
-                        <p class="text-xs text-indigo-600 mb-3">Enlaza este perfil con otros registros de la base de datos para mapear la red de conexiones.</p>
+                        <p class="text-xs text-indigo-600 mb-3">Enlaza este perfil con otros registros para mapear la red.</p>
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <select id="f_rel_persona" class="flex-1 p-2 border border-indigo-200 rounded focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
-                                <option value="">— Seleccionar persona del registro —</option>
+                                <option value="">— Seleccionar persona —</option>
                             </select>
                             <select id="f_rel_tipo" class="p-2 border border-indigo-200 rounded focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
                                 <option value="asociado a">Asociado a</option>
@@ -408,8 +433,6 @@
                                 <option value="mando de">Mando de</option>
                                 <option value="familiar de">Familiar de</option>
                                 <option value="cómplice de">Cómplice de</option>
-                                <option value="contacto de">Contacto de</option>
-                                <option value="rival de">Rival de</option>
                             </select>
                             <button type="button" onclick="agregarRelacion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded transition whitespace-nowrap">+ Agregar</button>
                         </div>
@@ -418,10 +441,10 @@
 
                     <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
                         <h3 class="text-lg font-semibold text-slate-800 mb-4 border-b border-slate-300 pb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4"></path></svg>
                             Historial de Eventos
                         </h3>
-                        <p class="text-xs text-slate-500 mb-3">Registra detenciones, avistamientos, incidentes u otros sucesos con fecha exacta.</p>
+                        <p class="text-xs text-slate-500 mb-3">Registra detenciones, avistamientos, etc.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                             <input type="date" id="f_ev_fecha" class="p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500 bg-white text-sm">
                             <select id="f_ev_tipo" class="p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500 bg-white text-sm">
@@ -429,199 +452,26 @@
                                 <option value="Detención">Detención</option>
                                 <option value="Incidente">Incidente</option>
                                 <option value="Reunión">Reunión</option>
-                                <option value="Operativo">Operativo</option>
-                                <option value="Comunicación">Comunicación</option>
-                                <option value="Cambio de domicilio">Cambio de domicilio</option>
-                                <option value="Otro">Otro</option>
                             </select>
                             <button type="button" onclick="agregarEvento()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold rounded transition">+ Agregar</button>
                         </div>
-                        <textarea id="f_ev_desc" rows="2" placeholder="Descripción del evento (lugar, testigos, detalles relevantes)..." class="w-full p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500 resize-none text-sm mb-3"></textarea>
+                        <textarea id="f_ev_desc" rows="2" placeholder="Descripción del evento..." class="w-full p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500"></textarea>
                         <div id="listaEventosForm" class="space-y-2"></div>
                     </div>
                 </form>
             </div>
 
             <div class="px-6 py-4 border-t bg-gray-100 rounded-b-xl flex justify-between items-center gap-3 shrink-0">
-                <button type="button" onclick="abrirAsistenteIAFormulario()" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-lg transition flex items-center gap-2 text-sm shadow">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    Asistente IA
-                </button>
                 <div class="flex gap-3">
                     <button type="button" onclick="cerrarModalForm()" class="px-5 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">Cancelar</button>
-                    <button type="button" onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition">Guardar Registro</button>
+                    <button type="button" onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition">Guardar</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Detalles (Vista Perfil) -->
-    <div id="modalDetails" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-2 sm:p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col transform scale-95 transition-transform duration-300" id="modalDetailsContent">
-
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-900 text-white rounded-t-xl shrink-0">
-                <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold flex items-center gap-2">
-                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
-                        Ficha de Inteligencia
-                    </h2>
-                    <span id="d_id_badge" class="bg-slate-700 text-xs px-2 py-1 rounded font-mono text-slate-300"></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="imprimirFicha()" class="px-3 py-1.5 text-sm bg-slate-600 hover:bg-slate-500 text-white font-medium rounded transition flex items-center gap-2" title="Imprimir / Exportar PDF">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        Imprimir
-                    </button>
-                    <button onclick="abrirAsistenteIA()" class="px-3 py-1.5 text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium rounded transition flex items-center gap-2" title="Asistente IA">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                        Asistente IA
-                    </button>
-                    <button id="btnCompartirDetalle" class="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded transition flex items-center gap-2" title="Copiar Ficha">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                        Compartir
-                    </button>
-                    <button onclick="cerrarModalDetails()" class="p-2 text-slate-400 hover:text-white transition bg-slate-800 rounded ml-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-0 flex flex-col md:flex-row bg-slate-50">
-                <div class="w-full md:w-1/3 bg-white border-r p-6 shrink-0 flex flex-col">
-                    <div class="flex flex-col items-center border-b pb-6 mb-6">
-                        <img id="d_foto" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-40 h-40 rounded-full border-4 border-slate-100 shadow-md object-cover mb-4 hidden">
-                        <div id="d_foto_placeholder" class="w-40 h-40 rounded-full border-4 border-slate-100 bg-slate-50 shadow-md flex items-center justify-center mb-4">
-                            <svg class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                        <h3 id="d_nombre" class="text-2xl font-black text-slate-800 text-center uppercase tracking-tight leading-tight mb-1"></h3>
-                        <p id="d_alias" class="text-lg font-bold text-red-600 mb-3 italic text-center"></p>
-                        <span id="d_grupo_badge" class="bg-red-100 text-red-800 text-sm px-4 py-1.5 rounded-full font-bold uppercase border border-red-200"></span>
-                    </div>
-
-                    <div class="space-y-4 text-sm">
-                        <div><p class="text-xs text-slate-500 font-bold uppercase">Ocupación / Función</p><p id="d_puesto" class="font-medium text-slate-800 text-base"></p></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><p class="text-xs text-slate-500 font-bold uppercase">Edad</p><p id="d_edad" class="font-medium text-slate-800"></p></div>
-                            <div><p class="text-xs text-slate-500 font-bold uppercase">F. Nacimiento</p><p id="d_fecha_nac" class="font-medium text-slate-800"></p></div>
-                        </div>
-                        <div><p class="text-xs text-slate-500 font-bold uppercase">CURP</p><p id="d_curp" class="font-mono bg-slate-100 px-2 py-1 rounded text-slate-800 inline-block font-semibold"></p></div>
-                        <div><p class="text-xs text-slate-500 font-bold uppercase">Origen</p><p id="d_origen" class="font-medium text-slate-800"></p></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><p class="text-xs text-slate-500 font-bold uppercase">Estudios</p><p id="d_estudios" class="font-medium text-slate-800"></p></div>
-                            <div><p class="text-xs text-slate-500 font-bold uppercase">Estado Civil</p><p id="d_civil" class="font-medium text-slate-800"></p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="w-full md:w-2/3 p-6 flex flex-col gap-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                            <h4 class="text-sm font-black text-red-700 uppercase mb-3 flex items-center gap-2 border-b border-red-100 pb-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                                Información Operativa
-                            </h4>
-                            <div class="space-y-3 text-sm">
-                                <div><span class="text-slate-500 block text-xs font-bold">Zona de Operación</span><span id="d_zona" class="font-semibold text-slate-800"></span></div>
-                                <div><span class="text-slate-500 block text-xs font-bold">Mando Directo</span><span id="d_mando" class="font-semibold text-slate-800"></span></div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div><span class="text-slate-500 block text-xs font-bold">Sueldo Estimado</span><span id="d_sueldo" class="font-bold text-green-700"></span></div>
-                                    <div><span class="text-slate-500 block text-xs font-bold">Antigüedad</span><span id="d_antiguedad" class="font-semibold text-slate-800"></span></div>
-                                </div>
-                                <div id="d_orden_banner" class="hidden mt-1 bg-red-600 text-white rounded-lg px-3 py-2 flex items-center gap-2 shadow">
-                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path></svg>
-                                    <div>
-                                        <p class="text-xs font-black uppercase tracking-wide">Orden de Aprehensión Activa</p>
-                                        <p id="d_orden_detalle" class="text-xs font-normal opacity-90 mt-0.5"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                            <h4 class="text-sm font-black text-blue-700 uppercase mb-3 flex items-center gap-2 border-b border-blue-100 pb-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Domicilio y Familia
-                            </h4>
-                            <div class="space-y-3 text-sm">
-                                <div><span class="text-slate-500 block text-xs font-bold">Domicilio Actual</span><span id="d_domicilio" class="font-semibold text-slate-800"></span></div>
-                                <div><span class="text-slate-500 block text-xs font-bold">Desc. Inmueble (Tiempo: <span id="d_tiempo_dom" class="text-slate-400 font-normal"></span>)</span><span id="d_desc_domicilio" class="font-medium text-slate-600 italic"></span></div>
-                                <div class="mt-3 pt-3 border-t border-slate-100">
-                                    <span class="text-slate-500 block text-xs font-bold mb-1">Círculo Íntimo</span>
-                                    <p class="truncate"><span class="text-xs text-slate-400 font-bold">PADRES:</span> <span id="d_padres" class="font-semibold text-slate-700"></span></p>
-                                    <p class="truncate"><span class="text-xs text-slate-400 font-bold">PAREJA:</span> <span id="d_pareja" class="font-semibold text-slate-700"></span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-sm">
-                        <h4 class="text-xs font-black text-yellow-800 uppercase mb-2">Observaciones y Notas</h4>
-                        <p id="d_observaciones" class="text-sm text-yellow-900 whitespace-pre-line font-medium leading-relaxed"></p>
-                    </div>
-
-                    <div id="seccionRelaciones" class="bg-indigo-50 p-5 rounded-xl border border-indigo-200 shadow-sm hidden">
-                        <h4 class="text-xs font-black text-indigo-800 uppercase mb-3 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                            Red de Vínculos
-                        </h4>
-                        <div id="d_relaciones" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-                    </div>
-
-                    <div id="seccionHistorial" class="hidden">
-                        <h4 class="text-xs font-black text-slate-600 uppercase mb-3 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Historial de Eventos
-                        </h4>
-                        <div id="d_historial" class="relative pl-5"></div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Asistente IA -->
-    <div id="modalIA" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-violet-700 to-indigo-700 rounded-t-2xl shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-black text-base">Asistente de Inteligencia IA</h3>
-                        <p class="text-violet-200 text-xs">Análisis, redacción y apoyo operativo con Gemini</p>
-                    </div>
-                </div>
-                <button onclick="cerrarModalIA()" class="p-1.5 text-white/60 hover:text-white transition bg-white/10 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <div class="px-5 py-3 border-b bg-slate-50 shrink-0">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Acciones rápidas</p>
-                <div class="flex flex-wrap gap-2" id="iaAccionesRapidas"></div>
-            </div>
-
-            <div id="iaChatArea" class="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-white min-h-0"></div>
-
-            <div class="px-5 py-4 border-t bg-slate-50 rounded-b-2xl shrink-0">
-                <div class="flex gap-2">
-                    <textarea id="iaInput" rows="2" placeholder="Escribe tu consulta o instrucción para el asistente..." class="flex-1 p-3 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-400" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeIA();}"></textarea>
-                    <button onclick="enviarMensajeIA()" id="iaBtnEnviar" class="px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold transition flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    </button>
-                </div>
-                <p class="text-xs text-slate-400 mt-2 text-center">El asistente tiene acceso al perfil actualmente abierto para personalizar el análisis.</p>
             </div>
         </div>
     </div>
 
     <!-- Contenedor Notificaciones -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-[70] flex flex-col gap-2"></div>
-
-    <!-- Área de Impresión (oculta en pantalla, visible al imprimir) -->
-    <div id="printArea"></div>
 
     <script>
         let personas = [];
@@ -635,7 +485,6 @@
                 personas = JSON.parse(storedData);
             }
             renderTable();
-
             document.getElementById('searchInput').addEventListener('input', renderTable);
             document.getElementById('fotoInput').addEventListener('change', handleImageUpload);
         };
@@ -644,31 +493,29 @@
             const dirEl = document.getElementById('vistaDirectorio');
             const statEl = document.getElementById('vistaEstadisticas');
             const redEl = document.getElementById('vistaRed');
-            const navDir = document.getElementById('navDirectorio');
-            const navStat = document.getElementById('navEstadisticas');
-            const navRed = document.getElementById('navRed');
-
-            const clsActive = 'flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg transition';
-            const clsInactive = 'flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition';
-
+            const orgEl = document.getElementById('vistaOrganizacional');
+            
             dirEl.classList.add('hidden');
             statEl.classList.add('hidden');
             redEl.classList.add('hidden');
-            navDir.className = clsInactive;
-            navStat.className = clsInactive;
-            navRed.className = clsInactive;
+            orgEl.classList.add('hidden');
+
+            document.getElementById('navDirectorio').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'directorio');
+            document.getElementById('navEstadisticas').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'estadisticas');
+            document.getElementById('navRed').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'red');
+            document.getElementById('navOrganizacional').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'organizacional');
 
             if (vista === 'estadisticas') {
                 statEl.classList.remove('hidden');
-                navStat.className = clsActive;
                 renderEstadisticas();
             } else if (vista === 'red') {
                 redEl.classList.remove('hidden');
-                navRed.className = clsActive;
                 setTimeout(iniciarMapaRed, 50);
+            } else if (vista === 'organizacional') {
+                orgEl.classList.remove('hidden');
+                cargarSelectGrupos();
             } else {
                 dirEl.classList.remove('hidden');
-                navDir.className = clsActive;
             }
         }
 
@@ -746,8 +593,7 @@
             const sortedFunciones = Object.entries(funcionesMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
             renderBarras('stat_funciones_lista', sortedFunciones, 'bg-purple-500');
 
-            const rangos = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56+': 0, 'Sin datos': 0 };
-            if (edades.length === 0 && total > 0) rangos['Sin datos'] = total;
+            const rangos = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56+': 0 };
             edades.forEach(e => {
                 if (e <= 25) rangos['18-25']++;
                 else if (e <= 35) rangos['26-35']++;
@@ -755,7 +601,6 @@
                 else if (e <= 55) rangos['46-55']++;
                 else rangos['56+']++;
             });
-            if (total - edades.length > 0) rangos['Sin datos'] = total - edades.length;
 
             const rangosData = Object.entries(rangos).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
             renderBarras('stat_edades_lista', rangosData, 'bg-green-500');
@@ -769,26 +614,16 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
 
-            let bgClass = tipo === 'success' ? 'bg-green-600' : (tipo === 'error' ? 'bg-red-600' : 'bg-blue-600');
+            let bgClass = tipo === 'success' ? 'bg-green-600' : 'bg-red-600';
             let icon = tipo === 'success'
                 ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
-                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path>';
 
-            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-start max-w-sm gap-3 toast-enter`;
-            toast.innerHTML = `<svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg><p class="text-sm font-medium leading-tight">${mensaje}</p>`;
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-start max-w-sm gap-3`;
+            toast.innerHTML = `<svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg><p class="text-sm font-medium">${mensaje}</p>`;
 
             container.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.classList.remove('toast-enter');
-                toast.classList.add('toast-enter-active');
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active');
-                toast.classList.add('toast-leave-active');
-                setTimeout(() => toast.remove(), 300);
-            }, (tipo === 'error' ? 5000 : 3000));
+            setTimeout(() => toast.remove(), 3000);
         }
 
         function exportarDatos() {
@@ -823,10 +658,10 @@
                         renderTable();
                         showToast("Base de datos restaurada correctamente.");
                     } else {
-                        showToast("El archivo no tiene el formato correcto de SIGEP.", "error");
+                        showToast("Formato de archivo incorrecto.", "error");
                     }
                 } catch (err) {
-                    showToast("Error al leer el archivo. Asegúrate de que sea un .json válido.", "error");
+                    showToast("Error al leer el archivo.", "error");
                 }
             };
             reader.readAsText(file);
@@ -843,8 +678,7 @@
             const filtrados = personas.filter(p =>
                 (p.nombre || '').toLowerCase().includes(term) ||
                 (p.alias || '').toLowerCase().includes(term) ||
-                (p.grupo || '').toLowerCase().includes(term) ||
-                (p.ocupacion || '').toLowerCase().includes(term)
+                (p.grupo || '').toLowerCase().includes(term)
             );
 
             if (filtrados.length === 0) {
@@ -852,15 +686,13 @@
             } else {
                 emptyState.classList.add('hidden');
 
-                const ordenados = [...filtrados].reverse();
-
-                ordenados.forEach(p => {
+                filtrados.reverse().forEach(p => {
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-slate-50 transition border-b border-gray-100';
+                    tr.className = 'hover:bg-slate-50 transition';
 
                     let renderImagen = p.foto
                         ? `<img class="h-12 w-12 object-cover" src="${p.foto}" alt="">`
-                        : `<svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                        : `<svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7"></path></svg>`;
 
                     tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -869,41 +701,21 @@
                                     ${renderImagen}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-black text-gray-900 tracking-tight">${p.nombre || 'DESCONOCIDO'}</div>
+                                    <div class="text-sm font-black text-gray-900">${p.nombre || 'DESCONOCIDO'}</div>
                                     <div class="text-xs font-semibold text-red-600">${p.alias ? `"${p.alias}"` : ''}</div>
-                                    <div class="text-xs text-gray-500">${p.ocupacion || ''}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 hidden sm:table-cell align-middle">
-                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-bold rounded bg-red-100 text-red-800 uppercase tracking-wide border border-red-200">
+                        <td class="px-6 py-4 hidden sm:table-cell">
+                            <span class="px-2.5 py-0.5 inline-flex text-xs font-bold rounded bg-red-100 text-red-800">
                                 ${p.grupo || 'Sin Grupo'}
                             </span>
-                            <div class="text-xs font-medium text-gray-600 mt-1 truncate max-w-[150px]">${p.funcion || 'Sin Función'}</div>
                         </td>
-                        <td class="px-6 py-4 hidden lg:table-cell align-middle">
-                            <div class="text-sm font-semibold text-gray-900">${p.zona || '-'}</div>
-                            <div class="text-xs text-gray-500 truncate max-w-[200px]">${p.domicilio || '-'}</div>
+                        <td class="px-6 py-4 hidden lg:table-cell">
+                            <div class="text-sm font-semibold">${p.zona || '-'}</div>
                         </td>
-                        <td class="px-4 py-4 whitespace-nowrap text-center align-middle">
-                            <div class="flex justify-center items-center gap-1.5 flex-wrap max-w-[280px] mx-auto">
-                                <button onclick="verPersona('${p.id}')" class="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-1.5 rounded transition" title="Ver Perfil">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    Ver
-                                </button>
-                                <button onclick="compartirRegistroDirecto('${p.id}')" class="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-100 hover:bg-green-200 px-2 py-1.5 rounded transition" title="Compartir">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                                    Compartir
-                                </button>
-                                <button onclick="editarPersona('${p.id}')" class="flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 px-2 py-1.5 rounded transition" title="Editar">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                    Editar
-                                </button>
-                                <button onclick="eliminarPersona('${p.id}')" class="flex items-center gap-1 text-xs font-bold text-red-700 bg-red-100 hover:bg-red-200 px-2 py-1.5 rounded transition" title="Borrar">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    Borrar
-                                </button>
-                            </div>
+                        <td class="px-4 py-4 text-center">
+                            <button onclick="verPersona('${p.id}')" class="text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-1.5 rounded transition">Ver</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -915,17 +727,9 @@
             document.getElementById('personaForm').reset();
             document.getElementById('registroId').value = '';
             document.getElementById('fotoBase64').value = '';
-            document.getElementById('previewFoto').src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            document.getElementById('previewFoto').classList.add('hidden');
-            document.getElementById('placeholderFoto').classList.remove('hidden');
             document.getElementById('modalFormTitle').innerText = 'Nuevo Registro';
             formRelaciones = [];
             formEventos = [];
-            renderRelacionesForm();
-            renderEventosForm();
-            popularSelectorPersonas(null);
-            document.getElementById('f_orden_aprehension').checked = false;
-            document.getElementById('f_orden_detalle_wrap').classList.add('hidden');
 
             const modal = document.getElementById('modalForm');
             modal.classList.remove('hidden');
@@ -960,14 +764,8 @@
         function calcularEdadForm() {
             const fechaStr = document.getElementById('f_fecha_nac').value;
             if (fechaStr) {
-                const nac = new Date(fechaStr);
-                const hoy = new Date();
-                let edad = hoy.getFullYear() - nac.getFullYear();
-                const m = hoy.getMonth() - nac.getMonth();
-                if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
-                document.getElementById('f_edad').value = edad;
-            } else {
-                document.getElementById('f_edad').value = '';
+                const edad = calcularEdad(fechaStr);
+                document.getElementById('f_edad').value = edad || '';
             }
         }
 
@@ -976,1351 +774,239 @@
             const grupo = document.getElementById('f_grupo').value.trim();
 
             if (!nombre || !grupo) {
-                showToast("El Nombre y el Grupo Delictivo son obligatorios.", "error");
+                showToast("Nombre y Grupo son obligatorios.", "error");
                 return;
             }
 
-            nombre = nombre.toUpperCase();
-            const id = document.getElementById('registroId').value;
-
             const personaData = {
-                id: id || 'SIGEP-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-                nombre: nombre,
+                id: document.getElementById('registroId').value || 'SIGEP-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                nombre: nombre.toUpperCase(),
                 alias: document.getElementById('f_alias').value,
                 ocupacion: document.getElementById('f_ocupacion').value,
                 fecha_nac: document.getElementById('f_fecha_nac').value,
                 curp: document.getElementById('f_curp').value.toUpperCase(),
-                estado_civil: document.getElementById('f_estado_civil').value,
-                estudios: document.getElementById('f_estudios').value,
-                origen: document.getElementById('f_origen').value,
-                padre: document.getElementById('f_padre').value,
-                madre: document.getElementById('f_madre').value,
-                hermanos: document.getElementById('f_hermanos').value,
-                dom_padres: document.getElementById('f_dom_padres').value,
-                pareja: document.getElementById('f_pareja').value,
-                hijos: document.getElementById('f_hijos').value,
-                domicilio: document.getElementById('f_domicilio').value,
-                desc_domicilio: document.getElementById('f_desc_domicilio').value,
-                tiempo_dom: document.getElementById('f_tiempo_dom').value,
                 grupo: grupo,
                 funcion: document.getElementById('f_funcion').value,
                 zona: document.getElementById('f_zona').value,
                 mando: document.getElementById('f_mando').value,
                 sueldo: document.getElementById('f_sueldo').value,
-                antiguedad: document.getElementById('f_antiguedad').value,
-                observaciones: document.getElementById('f_observaciones').value,
-                orden_aprehension: document.getElementById('f_orden_aprehension').checked,
-                orden_detalle: document.getElementById('f_orden_detalle').value,
-                foto: document.getElementById('fotoBase64').value,
-                relaciones: [...formRelaciones],
-                eventos: [...formEventos].sort((a, b) => b.fecha.localeCompare(a.fecha))
+                domicilio: document.getElementById('f_domicilio').value,
+                foto: document.getElementById('fotoBase64').value
             };
 
-            if (id) {
-                const index = personas.findIndex(p => p.id === id);
-                if (index !== -1) personas[index] = personaData;
-                showToast("Registro actualizado correctamente.");
+            const idx = personas.findIndex(p => p.id === personaData.id);
+            if (idx >= 0) {
+                personas[idx] = personaData;
             } else {
                 personas.push(personaData);
-                showToast("Nuevo registro creado exitosamente.");
             }
 
             guardarDatosLocales();
             renderTable();
             cerrarModalForm();
-        }
-
-        function editarPersona(id) {
-            const p = personas.find(x => x.id === id);
-            if (!p) return;
-
-            abrirModalForm();
-            document.getElementById('modalFormTitle').innerText = 'Editar Registro';
-            document.getElementById('registroId').value = p.id;
-
-            const campos = ['nombre', 'alias', 'ocupacion', 'fecha_nac', 'curp', 'estado_civil', 'estudios', 'origen',
-                            'padre', 'madre', 'hermanos', 'dom_padres', 'pareja', 'hijos',
-                            'domicilio', 'desc_domicilio', 'tiempo_dom',
-                            'grupo', 'funcion', 'zona', 'mando', 'sueldo', 'antiguedad', 'observaciones', 'orden_detalle'];
-
-            campos.forEach(campo => {
-                const el = document.getElementById('f_' + campo);
-                if (el) el.value = p[campo] || '';
-            });
-
-            calcularEdadForm();
-
-            if (p.foto) {
-                document.getElementById('fotoBase64').value = p.foto;
-                document.getElementById('previewFoto').src = p.foto;
-                document.getElementById('previewFoto').classList.remove('hidden');
-                document.getElementById('placeholderFoto').classList.add('hidden');
-            }
-
-            formRelaciones = p.relaciones ? [...p.relaciones] : [];
-            formEventos = p.eventos ? [...p.eventos] : [];
-            popularSelectorPersonas(p.id);
-            renderRelacionesForm();
-            renderEventosForm();
-            document.getElementById('f_orden_aprehension').checked = !!p.orden_aprehension;
-            const det = document.getElementById('f_orden_detalle_wrap');
-            det.classList.toggle('hidden', !p.orden_aprehension);
-        }
-
-        function eliminarPersona(id) {
-            if (confirm("¿Estás seguro de eliminar permanentemente este registro? Esta acción borrará los datos de tu computadora.")) {
-                personas = personas.filter(p => p.id !== id);
-                guardarDatosLocales();
-                renderTable();
-                showToast("Registro eliminado.");
-            }
+            showToast("Registro guardado exitosamente.");
         }
 
         function verPersona(id) {
-            const p = personas.find(x => x.id === id);
-            if (!p) return;
-            currentPersonaId = id;
-
-            document.getElementById('d_id_badge').innerText = p.id;
-            document.getElementById('d_nombre').innerText = p.nombre;
-            document.getElementById('d_alias').innerText = p.alias ? `"${p.alias}"` : '';
-            document.getElementById('d_grupo_badge').innerText = p.grupo || 'Sin Registro';
-            document.getElementById('d_puesto').innerText = [p.funcion, p.ocupacion].filter(Boolean).join(' / ') || 'No especificado';
-            document.getElementById('d_curp').innerText = p.curp || 'N/A';
-            document.getElementById('d_origen').innerText = p.origen || 'N/A';
-            document.getElementById('d_estudios').innerText = p.estudios || 'N/A';
-            document.getElementById('d_civil').innerText = p.estado_civil || 'N/A';
-            document.getElementById('d_fecha_nac').innerText = p.fecha_nac || 'N/A';
-
-            let edadStr = 'N/A';
-            if (p.fecha_nac) {
-                const nac = new Date(p.fecha_nac);
-                const hoy = new Date();
-                let e = hoy.getFullYear() - nac.getFullYear();
-                if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) e--;
-                edadStr = e + ' años';
-            }
-            document.getElementById('d_edad').innerText = edadStr;
-
-            const dFoto = document.getElementById('d_foto');
-            const dPlaceholder = document.getElementById('d_foto_placeholder');
-            if (p.foto) {
-                dFoto.src = p.foto;
-                dFoto.classList.remove('hidden');
-                dPlaceholder.classList.add('hidden');
-            } else {
-                dFoto.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                dFoto.classList.add('hidden');
-                dPlaceholder.classList.remove('hidden');
-            }
-
-            const setText = (id, val, defaultText = 'No registrado') => {
-                const el = document.getElementById(id);
-                el.innerText = val ? val : defaultText;
-                if (!val) el.classList.add('text-slate-400', 'italic', 'font-normal');
-                else el.classList.remove('text-slate-400', 'italic', 'font-normal');
-            };
-
-            setText('d_zona', p.zona);
-            setText('d_mando', p.mando);
-            setText('d_sueldo', p.sueldo);
-            setText('d_antiguedad', p.antiguedad);
-            setText('d_domicilio', p.domicilio);
-            setText('d_desc_domicilio', p.desc_domicilio);
-            document.getElementById('d_tiempo_dom').innerText = p.tiempo_dom || '?';
-
-            let padresStr = [p.padre, p.madre].filter(Boolean).join(' / ');
-            setText('d_padres', padresStr);
-            setText('d_pareja', p.pareja);
-            document.getElementById('d_observaciones').innerText = p.observaciones || 'Sin observaciones registradas.';
-
-            const ordenBanner = document.getElementById('d_orden_banner');
-            if (p.orden_aprehension) {
-                ordenBanner.classList.remove('hidden');
-                document.getElementById('d_orden_detalle').innerText = p.orden_detalle || '';
-            } else {
-                ordenBanner.classList.add('hidden');
-            }
-
-            renderRelacionesDetalle(p);
-            renderHistorialDetalle(p);
-
-            document.getElementById('btnCompartirDetalle').onclick = () => compartirRegistroDirecto(p.id);
-
-            const modal = document.getElementById('modalDetails');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                document.getElementById('modalDetailsContent').classList.remove('scale-95');
-            }, 10);
-        }
-
-        function cerrarModalDetails() {
-            const modal = document.getElementById('modalDetails');
-            modal.classList.add('opacity-0');
-            document.getElementById('modalDetailsContent').classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        function formatearTextoParaCompartir(p) {
-            let texto = `*FICHA DE INTELIGENCIA SIGEP*\n`;
-            texto += `ID: ${p.id}\n`;
-            texto += `*Nombre:* ${p.nombre}\n`;
-            if (p.alias) texto += `*Alias:* ${p.alias}\n`;
-            texto += `*Organización:* ${p.grupo}\n`;
-            if (p.funcion) texto += `*Función:* ${p.funcion}\n`;
-            if (p.zona) texto += `*Zona Op:* ${p.zona}\n`;
-            if (p.mando) texto += `*Jefe Directo:* ${p.mando}\n`;
-            if (p.ocupacion) texto += `*Ocupación:* ${p.ocupacion}\n`;
-            texto += `\n*Datos Generales:*\n`;
-            if (p.curp) texto += `- CURP: ${p.curp}\n`;
-            if (p.origen) texto += `- Origen: ${p.origen}\n`;
-            if (p.domicilio) texto += `- Ubicación: ${p.domicilio}\n`;
-            if (p.observaciones) texto += `\n*Notas:*\n${p.observaciones}\n`;
-            return texto;
-        }
-
-        function compartirRegistroDirecto(id) {
-            const p = personas.find(x => x.id === id);
-            if (!p) return;
-            const textoCompartir = formatearTextoParaCompartir(p);
-
-            if (navigator.share) {
-                navigator.share({ title: `Ficha: ${p.nombre}`, text: textoCompartir })
-                    .catch(() => copiarAlPortapapeles(textoCompartir));
-            } else {
-                copiarAlPortapapeles(textoCompartir);
-            }
-        }
-
-        function copiarAlPortapapeles(texto) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(texto).then(() => showToast("Ficha copiada al portapapeles."));
-            } else {
-                let textArea = document.createElement("textarea");
-                textArea.value = texto;
-                textArea.style.position = "fixed";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast("Ficha copiada (Modo compatibilidad).");
-                } catch (err) {
-                    showToast("Error al copiar texto.", "error");
-                }
-                textArea.remove();
-            }
-        }
-
-        // ── HISTORIAL DE EVENTOS ─────────────────────────────────────────────────
-        const EV_CONFIG = {
-            'Avistamiento':        { color: '#3b82f6', dot: '#60a5fa', icon: '👁' },
-            'Detención':           { color: '#ef4444', dot: '#f87171', icon: '🚔' },
-            'Incidente':           { color: '#f97316', dot: '#fb923c', icon: '⚠' },
-            'Reunión':             { color: '#8b5cf6', dot: '#a78bfa', icon: '🤝' },
-            'Operativo':           { color: '#dc2626', dot: '#ef4444', icon: '🎯' },
-            'Comunicación':        { color: '#10b981', dot: '#34d399', icon: '📡' },
-            'Cambio de domicilio': { color: '#f59e0b', dot: '#fbbf24', icon: '🏠' },
-            'Otro':                { color: '#64748b', dot: '#94a3b8', icon: '📋' }
-        };
-
-        function agregarEvento() {
-            const fecha = document.getElementById('f_ev_fecha').value;
-            const tipo = document.getElementById('f_ev_tipo').value;
-            const desc = document.getElementById('f_ev_desc').value.trim();
-            if (!fecha) { showToast("Selecciona una fecha para el evento.", "error"); return; }
-            if (!desc)  { showToast("Escribe una descripción del evento.", "error"); return; }
-            formEventos.push({ fecha, tipo, desc });
-            formEventos.sort((a, b) => b.fecha.localeCompare(a.fecha));
-            document.getElementById('f_ev_fecha').value = '';
-            document.getElementById('f_ev_desc').value = '';
-            renderEventosForm();
-        }
-
-        function eliminarEvento(idx) {
-            formEventos.splice(idx, 1);
-            renderEventosForm();
-        }
-
-        function renderEventosForm() {
-            const el = document.getElementById('listaEventosForm');
-            if (formEventos.length === 0) {
-                el.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-1">Sin eventos registrados aún.</p>';
-                return;
-            }
-            el.innerHTML = formEventos.map((ev, idx) => {
-                const cfg = EV_CONFIG[ev.tipo] || EV_CONFIG['Otro'];
-                const fechaStr = new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'numeric' });
-                return `<div class="flex items-start gap-3 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
-                    <span class="text-base mt-0.5 shrink-0">${cfg.icon}</span>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${cfg.color}22;color:${cfg.color}">${ev.tipo}</span>
-                            <span class="text-xs text-slate-500 font-mono">${fechaStr}</span>
-                        </div>
-                        <p class="text-sm text-slate-700 mt-0.5 leading-snug">${ev.desc}</p>
-                    </div>
-                    <button type="button" onclick="eliminarEvento(${idx})" class="text-red-400 hover:text-red-600 shrink-0 mt-0.5 transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>`;
-            }).join('');
-        }
-
-        function renderHistorialDetalle(p) {
-            const sec = document.getElementById('seccionHistorial');
-            const cont = document.getElementById('d_historial');
-            const evs = (p.eventos || []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
-            if (evs.length === 0) { sec.classList.add('hidden'); return; }
-            sec.classList.remove('hidden');
-
-            const byYear = {};
-            evs.forEach(ev => {
-                const yr = ev.fecha.slice(0, 4);
-                if (!byYear[yr]) byYear[yr] = [];
-                byYear[yr].push(ev);
-            });
-
-            cont.innerHTML = `<div class="absolute left-0 top-0 bottom-0 w-px bg-slate-200" style="left:7px"></div>` +
-                Object.keys(byYear).sort((a,b) => b - a).map(yr => {
-                    const items = byYear[yr].map(ev => {
-                        const cfg = EV_CONFIG[ev.tipo] || EV_CONFIG['Otro'];
-                        const fechaStr = new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'short' });
-                        return `<div class="flex items-start gap-3 mb-3">
-                            <div class="w-3.5 h-3.5 rounded-full border-2 border-white shrink-0 mt-1 z-10 relative" style="background:${cfg.dot}"></div>
-                            <div class="flex-1 bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-sm">
-                                <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:${cfg.color}18;color:${cfg.color}">${cfg.icon} ${ev.tipo}</span>
-                                    <span class="text-xs text-slate-400 font-mono">${fechaStr}</span>
-                                </div>
-                                <p class="text-sm text-slate-700 leading-snug">${ev.desc}</p>
-                            </div>
-                        </div>`;
-                    }).join('');
-                    return `<div class="mb-2">
-                        <div class="flex items-center gap-2 mb-2 ml-0">
-                            <div class="w-3.5 h-3.5 rounded-full bg-slate-400 shrink-0 z-10 relative"></div>
-                            <span class="text-xs font-black text-slate-500 uppercase tracking-wider">${yr}</span>
-                        </div>
-                        ${items}
-                    </div>`;
-                }).join('');
-        }
-        // ── FIN HISTORIAL ────────────────────────────────────────────────────────
-
-        // ── ORDEN DE APREHENSIÓN ─────────────────────────────────────────────────
-        document.addEventListener('change', function(e) {
-            if (e.target && e.target.id === 'f_orden_aprehension') {
-                document.getElementById('f_orden_detalle_wrap').classList.toggle('hidden', !e.target.checked);
-            }
-        });
-        // ── FIN ORDEN DE APREHENSIÓN ─────────────────────────────────────────────
-
-        // ── ASISTENTE IA ──────────────────────────────────────────────────────────
-        let iaPersonaActual = null;
-        const IA_ACCIONES = [
-            { label: '📋 Resumen ejecutivo', prompt: (p) => `Eres un analista de inteligencia. Con los siguientes datos del sujeto, redacta un RESUMEN EJECUTIVO profesional en español (máximo 300 palabras), adecuado para un reporte de inteligencia policial. Incluye: identificación, afiliación, rol, riesgo estimado y observaciones clave.\n\nDATOS:\n${perfilATexto(p)}` },
-            { label: '⚠️ Análisis de riesgo', prompt: (p) => `Eres un analista de inteligencia. Con los datos del sujeto, genera un ANÁLISIS DE RIESGO estructurado en español. Incluye: nivel de peligrosidad (Alto/Medio/Bajo con justificación), factores de riesgo, historial relevante, recomendaciones operativas y nivel de prioridad de seguimiento.\n\nDATOS:\n${perfilATexto(p)}` },
-            { label: '🔍 Preguntas de seguimiento', prompt: (p) => `Eres un analista de inteligencia. Con los datos del sujeto, genera una lista de 8 a 12 PREGUNTAS DE INVESTIGACIÓN prioritarias para obtener información crítica faltante sobre este individuo. Organízalas por área: identidad, operaciones, vínculos, activos, vulnerabilidades.\n\nDATOS:\n${perfilATexto(p)}` },
-            { label: '📄 Formato de reporte', prompt: (p) => `Eres un analista de inteligencia. Genera un REPORTE DE INTELIGENCIA FORMAL en español, con formato estructurado: Encabezado, Datos de Identificación, Antecedentes, Análisis Operativo, Red de Vínculos, Historial de Eventos, Conclusiones y Recomendaciones. Usa los datos del sujeto.\n\nDATOS:\n${perfilATexto(p)}` },
-            { label: '🕵️ Perfil psicosocial', prompt: (p) => `Eres un analista especializado en perfiles criminológicos. Con los datos disponibles, elabora un PERFIL PSICOSOCIAL del sujeto en español. Incluye: motivaciones posibles, patrones de comportamiento inferibles, vulnerabilidades sociales, tipo de liderazgo o rol en la organización, y factores de riesgo personal.\n\nDATOS:\n${perfilATexto(p)}` },
-            { label: '🗂️ Completar datos faltantes', prompt: (p) => `Eres un analista de inteligencia. Revisa el perfil del sujeto e identifica los CAMPOS VACÍOS O CON INFORMACIÓN INCOMPLETA. Para cada campo faltante, indica: nombre del campo, por qué es relevante para la investigación, y qué fuentes o técnicas podrían usarse para obtener esa información.\n\nDATOS:\n${perfilATexto(p)}` },
-        ];
-
-        function perfilATexto(p) {
-            if (!p) return 'Sin perfil cargado.';
-            const evts = (p.eventos || []).slice(0, 6).map(e => `  - [${e.fecha}] ${e.tipo}: ${e.desc}`).join('\n') || '  (ninguno)';
-            const rels = (p.relaciones || []).map(r => {
-                const t = personas.find(x => x.id === r.id);
-                return t ? `  - ${r.tipo}: ${t.nombre}` : null;
-            }).filter(Boolean).join('\n') || '  (ninguno)';
-            return [
-                `Nombre: ${p.nombre || 'N/D'}`,
-                `Alias: ${p.alias || 'N/D'}`,
-                `Fecha de nacimiento: ${p.fecha_nac || 'N/D'}`,
-                `CURP: ${p.curp || 'N/D'}`,
-                `Origen: ${p.origen || 'N/D'}`,
-                `Ocupación: ${p.ocupacion || 'N/D'}`,
-                `Estado civil: ${p.estado_civil || 'N/D'}`,
-                `Estudios: ${p.estudios || 'N/D'}`,
-                `Grupo delictivo: ${p.grupo || 'N/D'}`,
-                `Función/Puesto: ${p.funcion || 'N/D'}`,
-                `Mando directo: ${p.mando || 'N/D'}`,
-                `Zona de operación: ${p.zona || 'N/D'}`,
-                `Antigüedad: ${p.antiguedad || 'N/D'}`,
-                `Sueldo estimado: ${p.sueldo || 'N/D'}`,
-                `Orden de aprehensión: ${p.orden_aprehension ? 'SÍ — ' + (p.orden_detalle || '') : 'No'}`,
-                `Domicilio: ${p.domicilio || 'N/D'}`,
-                `Padre: ${p.padre || 'N/D'} | Madre: ${p.madre || 'N/D'}`,
-                `Pareja: ${p.pareja || 'N/D'} | Hijos: ${p.hijos || 'N/D'}`,
-                `Observaciones: ${p.observaciones || 'N/D'}`,
-                `\nVínculos registrados:\n${rels}`,
-                `\nHistorial de eventos (recientes):\n${evts}`,
-            ].join('\n');
-        }
-
-        function abrirAsistenteIA() {
-            const p = personas.find(x => x.id === currentPersonaId);
-            iaPersonaActual = p || null;
-            document.getElementById('iaChatArea').innerHTML = `
-                <div class="text-center py-6">
-                    <div class="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    </div>
-                    <p class="text-slate-700 font-semibold text-sm">${p ? `Perfil cargado: <span class="text-violet-700">${p.nombre}</span>` : 'Sin perfil activo'}</p>
-                    <p class="text-slate-400 text-xs mt-1">Selecciona una acción rápida o escribe tu consulta.</p>
-                </div>`;
-            const ac = document.getElementById('iaAccionesRapidas');
-            ac.innerHTML = IA_ACCIONES.map((a, i) =>
-                `<button onclick="usarAccionIA(${i})" class="text-xs bg-white border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-3 py-1.5 rounded-full transition shadow-sm">${a.label}</button>`
-            ).join('');
-            document.getElementById('iaInput').value = '';
-            document.getElementById('modalIA').classList.remove('hidden');
-        }
-
-        function cerrarModalIA() {
-            document.getElementById('modalIA').classList.add('hidden');
-        }
-
-        function usarAccionIA(idx) {
-            const accion = IA_ACCIONES[idx];
-            const prompt = accion.prompt(iaPersonaActual);
-            agregarMensajeIA('user', accion.label.replace(/^[^\s]+\s/, ''));
-            llamarIA(prompt);
-        }
-
-        async function enviarMensajeIA() {
-            const input = document.getElementById('iaInput');
-            const texto = input.value.trim();
-            if (!texto) return;
-            input.value = '';
-            agregarMensajeIA('user', texto);
-            const contextoPerfil = iaPersonaActual
-                ? `Contexto del perfil actual:\n${perfilATexto(iaPersonaActual)}\n\nConsulta del operador: ${texto}`
-                : texto;
-            llamarIA(contextoPerfil);
-        }
-
-        async function llamarIA(prompt) {
-            const btn = document.getElementById('iaBtnEnviar');
-            btn.disabled = true;
-            const loadId = 'ia-load-' + Date.now();
-            document.getElementById('iaChatArea').insertAdjacentHTML('beforeend', `
-                <div id="${loadId}" class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-4 h-4 text-violet-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    </div>
-                    <div class="bg-violet-50 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-violet-400 italic">Analizando...</div>
-                </div>`);
-            scrollIaChat();
-            try {
-                const resp = await fetch('/api/ia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
-                });
-                const data = await resp.json();
-                document.getElementById(loadId)?.remove();
-                if (data.error) throw new Error(data.error);
-                agregarMensajeIA('ia', data.text);
-            } catch(e) {
-                document.getElementById(loadId)?.remove();
-                agregarMensajeIA('ia', `⚠️ Error: ${e.message}`);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function agregarMensajeIA(rol, texto) {
-            const chat = document.getElementById('iaChatArea');
-            const esIA = rol === 'ia';
-            const html = esIA
-                ? `<div class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    </div>
-                    <div class="flex-1">
-                        <div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${texto}</div>
-                        <button onclick="copiarTextoIA(this)" data-texto="${encodeURIComponent(texto)}" class="text-xs text-slate-400 hover:text-violet-600 mt-1 ml-2 transition">📋 Copiar respuesta</button>
-                    </div>
-                   </div>`
-                : `<div class="flex justify-end">
-                    <div class="bg-violet-600 text-white rounded-2xl rounded-tr-none px-4 py-2.5 text-sm max-w-xs">${texto}</div>
-                   </div>`;
-            chat.insertAdjacentHTML('beforeend', html);
-            scrollIaChat();
-        }
-
-        function scrollIaChat() {
-            const chat = document.getElementById('iaChatArea');
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function copiarTextoIA(btn) {
-            const texto = decodeURIComponent(btn.dataset.texto);
-            navigator.clipboard.writeText(texto).then(() => {
-                btn.textContent = '✅ Copiado';
-                setTimeout(() => { btn.textContent = '📋 Copiar respuesta'; }, 2000);
-            });
-        }
-        // ── MODO FORMULARIO ──────────────────────────────────────────────────────
-        const IA_CAMPOS_FORM = {
-            'nombre': 'Nombre completo', 'alias': 'Alias/Apodo', 'ocupacion': 'Ocupación',
-            'fecha_nac': 'Fecha de nacimiento', 'curp': 'CURP', 'estado_civil': 'Estado civil',
-            'estudios': 'Estudios', 'origen': 'Lugar de origen',
-            'padre': 'Nombre del padre', 'madre': 'Nombre de la madre', 'hermanos': 'Hermanos',
-            'dom_padres': 'Domicilio de los padres', 'pareja': 'Pareja sentimental', 'hijos': 'Hijos',
-            'domicilio': 'Domicilio actual', 'desc_domicilio': 'Descripción del domicilio', 'tiempo_dom': 'Tiempo en domicilio',
-            'grupo': 'Grupo delictivo', 'funcion': 'Función/Puesto', 'zona': 'Zona de operación',
-            'mando': 'Mando directo', 'sueldo': 'Sueldo estimado', 'antiguedad': 'Antigüedad en organización',
-            'observaciones': 'Observaciones generales', 'orden_detalle': 'Detalle orden de aprehensión'
-        };
-
-        function leerFormActual() {
-            const datos = {};
-            Object.keys(IA_CAMPOS_FORM).forEach(campo => {
-                const el = document.getElementById('f_' + campo);
-                if (el) datos[campo] = el.value.trim();
-            });
-            datos.orden_aprehension = document.getElementById('f_orden_aprehension').checked;
-            return datos;
-        }
-
-        function formATexto(datos) {
-            return Object.entries(IA_CAMPOS_FORM)
-                .map(([k, label]) => `${label}: ${datos[k] || '(vacío)'}`)
-                .concat([`Orden de aprehensión: ${datos.orden_aprehension ? 'Sí' : 'No'}`])
-                .join('\n');
-        }
-
-        const IA_ACCIONES_FORM = [
-            {
-                label: '✨ Sugerir campos vacíos',
-                prompt: (datos) => `Eres un analista de inteligencia policial. Revisa el siguiente perfil INCOMPLETO y sugiere valores para los campos que están VACÍOS o incompletos. 
-
-INSTRUCCIONES IMPORTANTES:
-- Responde ÚNICAMENTE en este formato exacto para cada sugerencia, una por línea:
-  CAMPO[nombre_campo]: valor sugerido
-- Después de la lista de sugerencias, añade una sección "NOTAS:" con observaciones breves.
-- Sé conciso y realista. Si no puedes inferir un valor, no lo incluyas.
-- Los nombres de campo deben ser exactamente uno de estos: nombre, alias, ocupacion, fecha_nac, curp, estado_civil, estudios, origen, padre, madre, hermanos, dom_padres, pareja, hijos, domicilio, desc_domicilio, tiempo_dom, grupo, funcion, zona, mando, sueldo, antiguedad, observaciones
-
-PERFIL ACTUAL:
-${formATexto(datos)}`
-            },
-            {
-                label: '📝 Redactar Observaciones',
-                prompt: (datos) => `Eres un analista de inteligencia. Con la información del sujeto, redacta un párrafo de OBSERVACIONES GENERALES para su expediente. Incluye referencias a posibles vehículos, comportamientos inferibles, señas particulares probables, y notas de seguimiento relevantes. Máximo 150 palabras, tono técnico-policial.
-
-PERFIL ACTUAL:
-${formATexto(datos)}`
-            },
-            {
-                label: '🏘️ Datos de domicilio',
-                prompt: (datos) => `Eres un analista de inteligencia. Con base en la zona de operación, grupo delictivo, función y origen del sujeto, sugiere:
-1. Una descripción general del tipo de domicilio probable (zona, características de la vivienda).
-2. El campo "Descripción del domicilio" (señas físicas típicas de inmuebles en esa zona).
-3. Tiempo estimado en el domicilio.
-Responde en formato:
-CAMPO[domicilio]: valor
-CAMPO[desc_domicilio]: valor
-CAMPO[tiempo_dom]: valor
-Seguido de una breve justificación.
-
-PERFIL ACTUAL:
-${formATexto(datos)}`
-            },
-            {
-                label: '🔗 Sugerir vínculos probables',
-                prompt: (datos) => `Eres un analista de inteligencia. Con base en el perfil del sujeto (grupo, función, zona, mando), describe qué TIPOS DE VÍNCULOS o personas relacionadas es probable que tenga. No inventes nombres, sino describe los roles: mandos superiores típicos, subordinados, cómplices, contactos. Incluye recomendaciones de qué perfiles buscar para completar la red.
-
-PERFIL ACTUAL:
-${formATexto(datos)}`
-            },
-            {
-                label: '⚠️ Detectar inconsistencias',
-                prompt: (datos) => `Eres un analista de inteligencia. Revisa el siguiente perfil y detecta posibles INCONSISTENCIAS, CONTRADICCIONES o datos que no encajan entre sí (por ejemplo, edad vs antigüedad, zona vs domicilio, función vs estudios, etc.). Si todo es consistente, indícalo. Sé específico y técnico.
-
-PERFIL ACTUAL:
-${formATexto(datos)}`
-            },
-        ];
-
-        function abrirAsistenteIAFormulario() {
-            const datos = leerFormActual();
-            iaPersonaActual = null;
-            iaModoFormulario = true;
-            iaDatosFormulario = datos;
-
-            const nombre = datos.nombre || 'Perfil en elaboración';
-            const vacios = Object.values(datos).filter(v => !v || v === 'false').length;
-
-            document.getElementById('iaChatArea').innerHTML = `
-                <div class="text-center py-6">
-                    <div class="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    </div>
-                    <p class="text-slate-700 font-semibold text-sm">Modo: <span class="text-violet-700">Apoyo al llenado del formulario</span></p>
-                    <p class="text-slate-500 text-xs mt-1">Sujeto: <strong>${nombre}</strong></p>
-                    <p class="text-xs mt-1 ${vacios > 5 ? 'text-amber-600 font-semibold' : 'text-slate-400'}">${vacios} campo(s) sin completar detectado(s)</p>
-                    <p class="text-slate-400 text-xs mt-2">Selecciona una acción o escribe tu consulta. Puedes aplicar sugerencias directamente al formulario.</p>
-                </div>`;
-
-            const ac = document.getElementById('iaAccionesRapidas');
-            ac.innerHTML = IA_ACCIONES_FORM.map((a, i) =>
-                `<button onclick="usarAccionIAForm(${i})" class="text-xs bg-white border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-3 py-1.5 rounded-full transition shadow-sm">${a.label}</button>`
-            ).join('');
-
-            document.getElementById('iaInput').value = '';
-            document.getElementById('modalIA').classList.remove('hidden');
-        }
-
-        function usarAccionIAForm(idx) {
-            const accion = IA_ACCIONES_FORM[idx];
-            const datos = leerFormActual();
-            iaDatosFormulario = datos;
-            const label = accion.label.replace(/^[^\s]+\s/, '');
-            agregarMensajeIA('user', label);
-            llamarIAConApplicar(accion.prompt(datos));
-        }
-
-        async function llamarIAConApplicar(prompt) {
-            const btn = document.getElementById('iaBtnEnviar');
-            btn.disabled = true;
-            const loadId = 'ia-load-' + Date.now();
-            document.getElementById('iaChatArea').insertAdjacentHTML('beforeend', `
-                <div id="${loadId}" class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-4 h-4 text-violet-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    </div>
-                    <div class="bg-violet-50 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-violet-400 italic">Analizando el formulario...</div>
-                </div>`);
-            scrollIaChat();
-            try {
-                const resp = await fetch('/api/ia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
-                });
-                const data = await resp.json();
-                document.getElementById(loadId)?.remove();
-                if (data.error) throw new Error(data.error);
-                agregarRespuestaFormIA(data.text);
-            } catch(e) {
-                document.getElementById(loadId)?.remove();
-                agregarMensajeIA('ia', `⚠️ Error: ${e.message}`);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function agregarRespuestaFormIA(texto) {
-            const chat = document.getElementById('iaChatArea');
-            const lineas = texto.split('\n');
-            const sugerencias = [];
-            const otrasLineas = [];
-
-            lineas.forEach(linea => {
-                const match = linea.match(/^CAMPO\[(\w+)\]:\s*(.+)$/);
-                if (match) {
-                    const campo = match[1].trim();
-                    const valor = match[2].trim();
-                    if (IA_CAMPOS_FORM[campo]) sugerencias.push({ campo, valor, label: IA_CAMPOS_FORM[campo] });
-                } else {
-                    otrasLineas.push(linea);
-                }
-            });
-
-            let html = `<div class="flex items-start gap-3">
-                <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                </div>
-                <div class="flex-1 min-w-0">`;
-
-            if (sugerencias.length > 0) {
-                html += `<div class="bg-violet-50 border border-violet-200 rounded-2xl rounded-tl-none px-4 py-3 mb-2">
-                    <p class="text-xs font-black text-violet-700 uppercase tracking-wider mb-3">📋 Sugerencias — clic para aplicar al formulario</p>
-                    <div class="space-y-2">`;
-                sugerencias.forEach(s => {
-                    const valEnc = encodeURIComponent(s.valor);
-                    html += `<div class="flex items-start gap-2 bg-white rounded-xl border border-violet-100 px-3 py-2">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wide">${s.label}</p>
-                            <p class="text-sm text-slate-800 leading-snug mt-0.5">${s.valor}</p>
-                        </div>
-                        <button onclick="aplicarCampoForm('${s.campo}', decodeURIComponent('${valEnc}'), this)"
-                            class="shrink-0 text-xs bg-violet-600 hover:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition whitespace-nowrap">
-                            ↳ Aplicar
-                        </button>
-                    </div>`;
-                });
-                html += `</div>`;
-                if (sugerencias.length > 1) {
-                    const todosEnc = encodeURIComponent(JSON.stringify(sugerencias.map(s => ({ campo: s.campo, valor: s.valor }))));
-                    html += `<button onclick="aplicarTodosForm(decodeURIComponent('${todosEnc}'), this)" class="mt-3 w-full text-xs bg-violet-700 hover:bg-violet-800 text-white font-black py-2 rounded-xl transition">✅ Aplicar todas las sugerencias</button>`;
-                }
-                html += `</div>`;
-            }
-
-            const textoExtra = otrasLineas.join('\n').trim();
-            if (textoExtra) {
-                html += `<div class="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none px-4 py-3 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${textoExtra}</div>`;
-            }
-
-            html += `<button onclick="copiarTextoIA(this)" data-texto="${encodeURIComponent(texto)}" class="text-xs text-slate-400 hover:text-violet-600 mt-1 ml-2 transition">📋 Copiar respuesta</button>`;
-            html += `</div></div>`;
-            chat.insertAdjacentHTML('beforeend', html);
-            scrollIaChat();
-        }
-
-        function aplicarCampoForm(campo, valor, btn) {
-            const el = document.getElementById('f_' + campo);
-            if (!el) return;
-            el.value = valor;
-            el.classList.add('ring-2', 'ring-violet-400');
-            setTimeout(() => el.classList.remove('ring-2', 'ring-violet-400'), 2000);
-            btn.textContent = '✅ Aplicado';
-            btn.disabled = true;
-            btn.classList.replace('bg-violet-600', 'bg-green-600');
-            btn.classList.replace('hover:bg-violet-700', 'hover:bg-green-700');
-        }
-
-        function aplicarTodosForm(jsonEnc, btn) {
-            try {
-                const sugerencias = JSON.parse(jsonEnc);
-                sugerencias.forEach(s => {
-                    const el = document.getElementById('f_' + s.campo);
-                    if (el) {
-                        el.value = s.valor;
-                        el.classList.add('ring-2', 'ring-violet-400');
-                        setTimeout(() => el.classList.remove('ring-2', 'ring-violet-400'), 2500);
-                    }
-                });
-                btn.textContent = '✅ Todas aplicadas';
-                btn.disabled = true;
-                btn.classList.replace('bg-violet-700', 'bg-green-600');
-            } catch(e) { showToast('Error al aplicar sugerencias', 'error'); }
-        }
-
-        let iaModoFormulario = false;
-        let iaDatosFormulario = null;
-        // ── FIN ASISTENTE IA ─────────────────────────────────────────────────────
-
-        // ── MAPA DE RED ─────────────────────────────────────────────────────────
-        let redNodes = [], redEdges = [], redAnimId = null;
-        let redScale = 1, redOffsetX = 0, redOffsetY = 0;
-        let redFiltroTexto = '';
-        let redDragging = null, redDragStartX = 0, redDragStartY = 0;
-        let redPanning = false, redPanStartX = 0, redPanStartY = 0;
-        let redHover = null, redFiltroGrupo = null;
-        const GRUPO_PALETA = ['#6366f1','#ef4444','#f59e0b','#10b981','#3b82f6','#ec4899','#8b5cf6','#14b8a6','#f97316','#84cc16'];
-        const grupoColores = {};
-
-        function getGrupoColor(grupo) {
-            if (!grupo) return '#64748b';
-            if (!grupoColores[grupo]) {
-                const keys = Object.keys(grupoColores);
-                grupoColores[grupo] = GRUPO_PALETA[keys.length % GRUPO_PALETA.length];
-            }
-            return grupoColores[grupo];
-        }
-
-        function iniciarMapaRed() {
-            const canvas = document.getElementById('redCanvas');
-            const container = document.getElementById('vistaRed');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
-            const totalVinculos = personas.reduce((s, p) => s + (p.relaciones ? p.relaciones.length : 0), 0);
-
-            document.getElementById('redVacio').classList.toggle('hidden', totalVinculos > 0);
-            canvas.style.display = totalVinculos > 0 ? 'block' : 'none';
-
-            if (totalVinculos === 0) { document.getElementById('redStats').innerText = 'Sin vínculos'; return; }
-
-            const nodesEnRed = new Set();
-            redEdges = [];
-            personas.forEach(p => {
-                (p.relaciones || []).forEach(r => {
-                    const target = personas.find(x => x.id === r.id);
-                    if (!target) return;
-                    nodesEnRed.add(p.id);
-                    nodesEnRed.add(r.id);
-                    if (!redEdges.find(e => (e.a === p.id && e.b === r.id) || (e.a === r.id && e.b === p.id))) {
-                        redEdges.push({ a: p.id, b: r.id, tipo: r.tipo });
-                    }
-                });
-            });
-
-            const cx = canvas.width / 2, cy = canvas.height / 2;
-            const arr = [...nodesEnRed];
-            redNodes = arr.map((id, i) => {
-                const p = personas.find(x => x.id === id);
-                const angle = (i / arr.length) * Math.PI * 2;
-                const r = Math.min(cx, cy) * 0.55;
-                return {
-                    id, p,
-                    x: cx + Math.cos(angle) * r + (Math.random() - 0.5) * 40,
-                    y: cy + Math.sin(angle) * r + (Math.random() - 0.5) * 40,
-                    vx: 0, vy: 0,
-                    radius: 22
-                };
-            });
-
-            redScale = 1; redOffsetX = 0; redOffsetY = 0;
-            construirLeyenda();
-            document.getElementById('redStats').innerText = `${redNodes.length} nodos · ${redEdges.length} vínculos`;
-
-            canvas.onmousedown = redMouseDown;
-            canvas.onmousemove = redMouseMove;
-            canvas.onmouseup = redMouseUp;
-            canvas.onmouseleave = redMouseUp;
-            canvas.onclick = redClick;
-            canvas.onwheel = redWheel;
-            canvas.ontouchstart = redTouchStart;
-            canvas.ontouchmove = redTouchMove;
-            canvas.ontouchend = redTouchEnd;
-
-            if (redAnimId) cancelAnimationFrame(redAnimId);
-            let tick = 0;
-            function loop() {
-                redSimulate(tick++);
-                redDraw(canvas);
-                redAnimId = requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        function aplicarFiltroTexto(term) {
-            redFiltroTexto = term.trim().toLowerCase();
-            const conteoEl = document.getElementById('redBusquedaConteo');
-            if (!redFiltroTexto) {
-                redNodes.forEach(n => { n.highlight = false; n.filtrado = redFiltroGrupo ? (n.p.grupo || 'Sin grupo') !== redFiltroGrupo : false; });
-                conteoEl.classList.add('hidden');
-                return;
-            }
-            let matches = 0;
-            redNodes.forEach(n => {
-                const haystack = [n.p.nombre, n.p.alias, n.p.grupo, n.p.funcion].filter(Boolean).join(' ').toLowerCase();
-                const match = haystack.includes(redFiltroTexto);
-                n.highlight = match;
-                n.filtrado = !match;
-                if (match) matches++;
-            });
-            conteoEl.classList.remove('hidden');
-            conteoEl.textContent = matches === 0 ? 'Sin resultados' : `${matches} encontrado${matches !== 1 ? 's' : ''}`;
-        }
-
-        function construirLeyenda() {
-            const grupos = [...new Set(redNodes.map(n => n.p.grupo || 'Sin grupo'))];
-            const leyEl = document.getElementById('redLeyenda');
-            leyEl.innerHTML = `<button onclick="redFiltroGrupo=null; redNodes.forEach(n=>n.filtrado=false);" class="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition"><span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>Todos</button>`;
-            grupos.forEach(g => {
-                const color = getGrupoColor(g);
-                leyEl.innerHTML += `<button onclick="redFiltroGrupo='${g.replace(/'/g,"\\'")}'; redNodes.forEach(n=>n.filtrado=(n.p.grupo||'Sin grupo')!=='${g.replace(/'/g,"\\'")}');" class="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition text-left"><span class="w-3 h-3 rounded-full shrink-0" style="background:${color}"></span><span class="truncate">${g}</span></button>`;
-            });
-        }
-
-        function redSimulate(tick) {
-            const alpha = Math.max(0.01, 0.4 - tick * 0.002);
-            const repulse = 3200, spring = 0.018, damping = 0.82, ideal = 160;
-
-            redNodes.forEach(a => {
-                redNodes.forEach(b => {
-                    if (a === b) return;
-                    const dx = a.x - b.x, dy = a.y - b.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-                    const force = repulse / (dist * dist);
-                    a.vx += (dx / dist) * force * alpha;
-                    a.vy += (dy / dist) * force * alpha;
-                });
-            });
-
-            redEdges.forEach(e => {
-                const na = redNodes.find(n => n.id === e.a);
-                const nb = redNodes.find(n => n.id === e.b);
-                if (!na || !nb) return;
-                const dx = nb.x - na.x, dy = nb.y - na.y;
-                const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-                const diff = (dist - ideal) * spring;
-                na.vx += (dx / dist) * diff;
-                na.vy += (dy / dist) * diff;
-                nb.vx -= (dx / dist) * diff;
-                nb.vy -= (dy / dist) * diff;
-            });
-
-            const canvas = document.getElementById('redCanvas');
-            redNodes.forEach(n => {
-                if (n === redDragging) return;
-                n.vx *= damping; n.vy *= damping;
-                n.x += n.vx; n.y += n.vy;
-                n.x = Math.max(30, Math.min(canvas.width - 30, n.x));
-                n.y = Math.max(30, Math.min(canvas.height - 30, n.y));
-            });
-        }
-
-        function redDraw(canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            ctx.translate(redOffsetX, redOffsetY);
-            ctx.scale(redScale, redScale);
-
-            redEdges.forEach(e => {
-                const na = redNodes.find(n => n.id === e.a);
-                const nb = redNodes.find(n => n.id === e.b);
-                if (!na || !nb) return;
-                const dimmed = (na.filtrado || nb.filtrado);
-                ctx.save();
-                ctx.globalAlpha = dimmed ? 0.08 : 0.55;
-                ctx.beginPath();
-                ctx.moveTo(na.x, na.y);
-                ctx.lineTo(nb.x, nb.y);
-                ctx.strokeStyle = '#6366f1';
-                ctx.lineWidth = 1.5;
-                ctx.setLineDash([5, 4]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                if (!dimmed && redScale > 0.6) {
-                    const mx = (na.x + nb.x) / 2, my = (na.y + nb.y) / 2;
-                    const dx = nb.x - na.x, dy = nb.y - na.y;
-                    const angle = Math.atan2(dy, dx);
-                    ctx.save();
-                    ctx.translate(mx, my);
-                    ctx.rotate(angle);
-                    ctx.fillStyle = '#818cf8';
-                    ctx.font = `bold ${9 / redScale}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.fillText(e.tipo, 0, -5);
-                    ctx.restore();
-                }
-                ctx.restore();
-            });
-
-            redNodes.forEach(n => {
-                const dimmed = n.filtrado;
-                const isHover = n === redHover;
-                const isHighlight = n.highlight;
-                const color = getGrupoColor(n.p.grupo);
-                ctx.save();
-                ctx.globalAlpha = dimmed ? 0.12 : 1;
-
-                if (isHighlight) {
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.radius + 12, 0, Math.PI * 2);
-                    ctx.fillStyle = '#fef08a33';
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.radius + 7, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#facc15';
-                    ctx.lineWidth = 2.5;
-                    ctx.stroke();
-                }
-
-                if (isHover) {
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.radius + 8, 0, Math.PI * 2);
-                    ctx.fillStyle = color + '33';
-                    ctx.fill();
-                }
-
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
-                const grad = ctx.createRadialGradient(n.x - 5, n.y - 5, 2, n.x, n.y, n.radius);
-                grad.addColorStop(0, color + 'dd');
-                grad.addColorStop(1, color + '88');
-                ctx.fillStyle = grad;
-                ctx.fill();
-                ctx.strokeStyle = isHover ? '#fff' : color;
-                ctx.lineWidth = isHover ? 2.5 : 1.5;
-                ctx.stroke();
-
-                if (n.p.foto) {
-                    try {
-                        const img = new Image();
-                        img.src = n.p.foto;
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.arc(n.x, n.y, n.radius - 1, 0, Math.PI * 2);
-                        ctx.clip();
-                        ctx.drawImage(img, n.x - n.radius + 1, n.y - n.radius + 1, (n.radius - 1) * 2, (n.radius - 1) * 2);
-                        ctx.restore();
-                    } catch(e) {}
-                } else {
-                    const initials = n.p.nombre.split(' ').slice(0, 2).map(w => w[0] || '').join('');
-                    ctx.fillStyle = '#fff';
-                    ctx.font = `bold ${11 / redScale < 7 ? 7 : 11}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(initials, n.x, n.y);
-                }
-
-                if (redScale > 0.5) {
-                    const label = n.p.alias ? `"${n.p.alias}"` : n.p.nombre.split(' ')[0];
-                    ctx.fillStyle = dimmed ? '#475569' : '#e2e8f0';
-                    ctx.font = `${dimmed ? 'normal' : 'bold'} ${10}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText(label, n.x, n.y + n.radius + 4);
-                }
-                ctx.restore();
-            });
-
-            ctx.restore();
-        }
-
-        function canvasToWorld(cx, cy) {
-            return { x: (cx - redOffsetX) / redScale, y: (cy - redOffsetY) / redScale };
-        }
-
-        function getNodeAt(cx, cy) {
-            const w = canvasToWorld(cx, cy);
-            return redNodes.find(n => {
-                const dx = n.x - w.x, dy = n.y - w.y;
-                return Math.sqrt(dx * dx + dy * dy) < n.radius + 5;
-            });
-        }
-
-        function redMouseDown(e) {
-            const rect = e.target.getBoundingClientRect();
-            const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
-            const node = getNodeAt(cx, cy);
-            if (node) {
-                redDragging = node;
-                redDragStartX = cx; redDragStartY = cy;
-            } else {
-                redPanning = true;
-                redPanStartX = e.clientX - redOffsetX;
-                redPanStartY = e.clientY - redOffsetY;
-            }
-        }
-
-        function redMouseMove(e) {
-            const rect = e.target.getBoundingClientRect();
-            const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
-            if (redDragging) {
-                const w = canvasToWorld(cx, cy);
-                redDragging.x = w.x; redDragging.y = w.y;
-                redDragging.vx = 0; redDragging.vy = 0;
-            } else if (redPanning) {
-                redOffsetX = e.clientX - redPanStartX;
-                redOffsetY = e.clientY - redPanStartY;
-            } else {
-                const prev = redHover;
-                redHover = getNodeAt(cx, cy);
-                const tip = document.getElementById('redTooltip');
-                if (redHover) {
-                    const p = redHover.p;
-                    tip.classList.remove('hidden');
-                    tip.innerHTML = `<div class="font-black text-sm mb-0.5">${p.nombre}</div>${p.alias ? `<div class="text-red-400 italic mb-0.5">"${p.alias}"</div>` : ''}<div class="text-indigo-300">${p.grupo || ''}</div>${p.funcion ? `<div class="text-slate-400 mt-0.5">${p.funcion}</div>` : ''}<div class="text-slate-500 mt-1">Clic para ver ficha</div>`;
-                    tip.style.left = (cx + 14) + 'px';
-                    tip.style.top = (cy - 10) + 'px';
-                    e.target.style.cursor = 'pointer';
-                } else {
-                    tip.classList.add('hidden');
-                    e.target.style.cursor = redPanning ? 'grabbing' : 'default';
-                }
-            }
-        }
-
-        function redMouseUp(e) {
-            redDragging = null;
-            redPanning = false;
-            document.getElementById('redTooltip').classList.add('hidden');
-        }
-
-        function redClick(e) {
-            if (Math.abs(e.clientX - (redPanStartX + redOffsetX)) > 5) return;
-            const rect = e.target.getBoundingClientRect();
-            const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
-            if (node) {
-                mostrarVista('directorio');
-                setTimeout(() => verPersona(node.id), 120);
-            }
-        }
-
-        function redWheel(e) {
-            e.preventDefault();
-            const rect = e.target.getBoundingClientRect();
-            const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
-            const factor = e.deltaY < 0 ? 1.12 : 0.88;
-            const newScale = Math.max(0.2, Math.min(4, redScale * factor));
-            redOffsetX = cx - (cx - redOffsetX) * (newScale / redScale);
-            redOffsetY = cy - (cy - redOffsetY) * (newScale / redScale);
-            redScale = newScale;
-        }
-
-        let redTouchDist = null;
-        function redTouchStart(e) {
-            if (e.touches.length === 1) {
-                const t = e.touches[0];
-                const rect = e.target.getBoundingClientRect();
-                const cx = t.clientX - rect.left, cy = t.clientY - rect.top;
-                const node = getNodeAt(cx, cy);
-                if (node) { redDragging = node; }
-                else { redPanning = true; redPanStartX = t.clientX - redOffsetX; redPanStartY = t.clientY - redOffsetY; }
-            } else if (e.touches.length === 2) {
-                redTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            }
-        }
-        function redTouchMove(e) {
-            e.preventDefault();
-            if (e.touches.length === 1) {
-                const t = e.touches[0];
-                const rect = e.target.getBoundingClientRect();
-                const cx = t.clientX - rect.left, cy = t.clientY - rect.top;
-                if (redDragging) { const w = canvasToWorld(cx, cy); redDragging.x = w.x; redDragging.y = w.y; }
-                else if (redPanning) { redOffsetX = t.clientX - redPanStartX; redOffsetY = t.clientY - redPanStartY; }
-            } else if (e.touches.length === 2 && redTouchDist) {
-                const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                redZoom(d / redTouchDist);
-                redTouchDist = d;
-            }
-        }
-        function redTouchEnd() { redDragging = null; redPanning = false; redTouchDist = null; }
-
-        function redZoom(factor) {
-            const canvas = document.getElementById('redCanvas');
-            const cx = canvas.width / 2, cy = canvas.height / 2;
-            const newScale = Math.max(0.2, Math.min(4, redScale * factor));
-            redOffsetX = cx - (cx - redOffsetX) * (newScale / redScale);
-            redOffsetY = cy - (cy - redOffsetY) * (newScale / redScale);
-            redScale = newScale;
-        }
-
-        function redCentrar() {
-            const canvas = document.getElementById('redCanvas');
-            if (redNodes.length === 0) return;
-            const xs = redNodes.map(n => n.x), ys = redNodes.map(n => n.y);
-            const minX = Math.min(...xs), maxX = Math.max(...xs);
-            const minY = Math.min(...ys), maxY = Math.max(...ys);
-            const mw = maxX - minX || 1, mh = maxY - minY || 1;
-            const scale = Math.min(0.9 * canvas.width / mw, 0.9 * canvas.height / mh, 2);
-            redScale = scale;
-            redOffsetX = canvas.width / 2 - ((minX + maxX) / 2) * scale;
-            redOffsetY = canvas.height / 2 - ((minY + maxY) / 2) * scale;
-        }
-        // ── FIN MAPA DE RED ──────────────────────────────────────────────────────
-
-        function popularSelectorPersonas(excluirId) {
-            const sel = document.getElementById('f_rel_persona');
-            sel.innerHTML = '<option value="">— Seleccionar persona del registro —</option>';
-            personas
-                .filter(p => p.id !== excluirId)
-                .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                .forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.nombre + (p.alias ? ` "${p.alias}"` : '') + (p.grupo ? ` · ${p.grupo}` : '');
-                    sel.appendChild(opt);
-                });
+            console.log("Ver persona:", id);
         }
 
         function agregarRelacion() {
-            const selPersona = document.getElementById('f_rel_persona');
-            const selTipo = document.getElementById('f_rel_tipo');
-            const targetId = selPersona.value;
-            if (!targetId) { showToast("Selecciona una persona del registro.", "error"); return; }
-            if (formRelaciones.find(r => r.id === targetId)) { showToast("Este vínculo ya fue agregado.", "error"); return; }
-            formRelaciones.push({ id: targetId, tipo: selTipo.value });
-            selPersona.value = '';
-            renderRelacionesForm();
+            const rel = {
+                persona: document.getElementById('f_rel_persona').value,
+                tipo: document.getElementById('f_rel_tipo').value
+            };
+            if (rel.persona) {
+                formRelaciones.push(rel);
+                showToast("Relación agregada.");
+            }
         }
 
-        function eliminarRelacion(idx) {
-            formRelaciones.splice(idx, 1);
-            renderRelacionesForm();
+        function agregarEvento() {
+            const evt = {
+                fecha: document.getElementById('f_ev_fecha').value,
+                tipo: document.getElementById('f_ev_tipo').value,
+                desc: document.getElementById('f_ev_desc').value
+            };
+            if (evt.fecha) {
+                formEventos.push(evt);
+                showToast("Evento agregado.");
+            }
         }
 
-        function renderRelacionesForm() {
-            const contenedor = document.getElementById('listaRelacionesForm');
-            if (formRelaciones.length === 0) {
-                contenedor.innerHTML = '<p class="text-xs text-indigo-400 italic text-center py-2">Sin vínculos agregados aún.</p>';
+        // ===== FUNCIONES DE MAPA DE RED =====
+        let redCanvas, redCtx, redNodes = [], redLinks = [];
+        let redPanning = false, redStartX, redStartY, redOffsetX = 0, redOffsetY = 0, redZoom = 1;
+
+        function iniciarMapaRed() {
+            redCanvas = document.getElementById('redCanvas');
+            redCtx = redCanvas.getContext('2d');
+
+            redCanvas.width = redCanvas.offsetWidth;
+            redCanvas.height = redCanvas.offsetHeight;
+
+            generarRedNodos();
+            dibujarRed();
+
+            redCanvas.addEventListener('mousedown', (e) => { redPanning = true; redStartX = e.clientX; redStartY = e.clientY; });
+            redCanvas.addEventListener('mousemove', (e) => {
+                if (redPanning) {
+                    redOffsetX += e.clientX - redStartX;
+                    redOffsetY += e.clientY - redStartY;
+                    redStartX = e.clientX;
+                    redStartY = e.clientY;
+                    dibujarRed();
+                }
+            });
+            redCanvas.addEventListener('mouseup', () => { redPanning = false; });
+            redCanvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                redZoom *= e.deltaY > 0 ? 0.9 : 1.1;
+                redZoom = Math.max(0.1, Math.min(5, redZoom));
+                dibujarRed();
+            });
+        }
+
+        function generarRedNodos() {
+            redNodes = [];
+            redLinks = [];
+
+            personas.forEach((p, i) => {
+                redNodes.push({
+                    id: p.id,
+                    nombre: p.nombre,
+                    grupo: p.grupo,
+                    x: Math.random() * redCanvas.width,
+                    y: Math.random() * redCanvas.height
+                });
+            });
+
+            // Simular fuerzas gravitacionales entre nodos
+            for (let i = 0; i < 20; i++) {
+                let changed = false;
+                redNodes.forEach((n1, idx1) => {
+                    redNodes.forEach((n2, idx2) => {
+                        if (idx1 === idx2) return;
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 50) {
+                            n1.x -= (dx / dist) * 2;
+                            n1.y -= (dy / dist) * 2;
+                            changed = true;
+                        }
+                    });
+                });
+                if (!changed) break;
+            }
+        }
+
+        function dibujarRed() {
+            redCtx.clearRect(0, 0, redCanvas.width, redCanvas.height);
+            redCtx.save();
+            redCtx.translate(redOffsetX, redOffsetY);
+            redCtx.scale(redZoom, redZoom);
+
+            // Dibujar líneas
+            redCtx.strokeStyle = '#475569';
+            redCtx.lineWidth = 1;
+            redNodes.forEach(n => {
+                redNodes.forEach(n2 => {
+                    if (Math.random() < 0.1) {
+                        redCtx.beginPath();
+                        redCtx.moveTo(n.x, n.y);
+                        redCtx.lineTo(n2.x, n2.y);
+                        redCtx.stroke();
+                    }
+                });
+            });
+
+            // Dibujar nodos
+            redNodes.forEach(n => {
+                const colors = { 'GRUPO A': '#dc2626', 'GRUPO B': '#2563eb', 'GRUPO C': '#7c3aed' };
+                const color = colors[n.grupo] || '#64748b';
+                
+                redCtx.fillStyle = color;
+                redCtx.beginPath();
+                redCtx.arc(n.x, n.y, 15, 0, Math.PI * 2);
+                redCtx.fill();
+
+                redCtx.fillStyle = '#fff';
+                redCtx.font = 'bold 10px Arial';
+                redCtx.textAlign = 'center';
+                redCtx.fillText(n.nombre.substring(0, 3), n.x, n.y + 4);
+            });
+
+            redCtx.restore();
+        }
+
+        // ===== FUNCIONES DE ESTRUCTURA ORGANIZACIONAL =====
+        function cargarSelectGrupos() {
+            const select = document.getElementById('orgSelectGrupo');
+            const grupos = [...new Set(personas.map(p => p.grupo).filter(Boolean))].sort();
+
+            select.innerHTML = '<option value="">Seleccionar grupo...</option>';
+            grupos.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                select.appendChild(opt);
+            });
+        }
+
+        function actualizarEstructuraOrganizacional() {
+            const grupo = document.getElementById('orgSelectGrupo').value;
+            const container = document.getElementById('orgTree');
+            const vacio = document.getElementById('orgVacio');
+
+            if (!grupo) {
+                container.innerHTML = '';
+                vacio.classList.remove('hidden');
                 return;
             }
-            contenedor.innerHTML = formRelaciones.map((rel, idx) => {
-                const persona = personas.find(p => p.id === rel.id);
-                const nombre = persona ? persona.nombre + (persona.alias ? ` "${persona.alias}"` : '') : rel.id;
-                const grupo = persona ? persona.grupo || '' : '';
-                return `
-                    <div class="flex items-center justify-between bg-white border border-indigo-100 rounded-lg px-3 py-2 shadow-sm">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">${rel.tipo}</span>
-                            <div class="min-w-0">
-                                <div class="text-sm font-bold text-slate-800 truncate">${nombre}</div>
-                                ${grupo ? `<div class="text-xs text-slate-400">${grupo}</div>` : ''}
-                            </div>
-                        </div>
-                        <button type="button" onclick="eliminarRelacion(${idx})" class="ml-2 text-red-400 hover:text-red-600 shrink-0 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>`;
-            }).join('');
-        }
 
-        function renderRelacionesDetalle(p) {
-            const seccion = document.getElementById('seccionRelaciones');
-            const contenedor = document.getElementById('d_relaciones');
-            const relaciones = p.relaciones || [];
+            vacio.classList.add('hidden');
 
-            if (relaciones.length === 0) {
-                seccion.classList.add('hidden');
+            // Filtrar personas del grupo
+            const miembros = personas.filter(p => p.grupo === grupo);
+
+            if (miembros.length === 0) {
+                container.innerHTML = '<p class="text-slate-500">Sin miembros en este grupo.</p>';
                 return;
             }
 
-            seccion.classList.remove('hidden');
-            contenedor.innerHTML = relaciones.map(rel => {
-                const vinculado = personas.find(x => x.id === rel.id);
-                if (!vinculado) return '';
-                const iniciales = vinculado.nombre.split(' ').slice(0, 2).map(w => w[0]).join('');
-                return `
-                    <button onclick="cerrarModalDetails(); setTimeout(() => verPersona('${vinculado.id}'), 320);"
-                        class="flex items-center gap-3 bg-white border border-indigo-200 rounded-xl p-3 text-left hover:border-indigo-400 hover:shadow-md transition w-full group">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-black text-sm flex items-center justify-center shrink-0 group-hover:bg-indigo-200 transition overflow-hidden">
-                            ${vinculado.foto ? `<img src="${vinculado.foto}" class="w-full h-full object-cover">` : iniciales}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="text-xs font-semibold text-slate-800 truncate">${vinculado.nombre}</div>
-                            ${vinculado.alias ? `<div class="text-xs text-red-500 italic truncate">"${vinculado.alias}"</div>` : ''}
-                            <div class="text-xs text-slate-400 truncate">${vinculado.grupo || ''}</div>
-                        </div>
-                        <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-2 py-0.5 rounded-full border border-indigo-100 shrink-0 capitalize">${rel.tipo}</span>
-                    </button>`;
-            }).filter(Boolean).join('');
+            // Construir árbol jerárquico
+            const jefes = miembros.filter(p => !p.mando);
+            const html = jefes.map(jefe => construirArbolPersona(jefe, miembros)).join('');
+
+            container.innerHTML = `<div class="space-y-6">${html}</div>`;
         }
 
-        function imprimirFicha() {
-            const p = personas.find(x => x.id === currentPersonaId);
-            if (!p) return;
+        function construirArbolPersona(persona, todosMiembros, nivel = 0) {
+            const subordinados = todosMiembros.filter(p => p.mando === persona.nombre);
+            const indent = 'ml-' + (nivel * 6);
 
-            const ahora = new Date();
-            const fechaImpresion = ahora.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
-            const horaImpresion = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            let html = `<div class="${indent} border-l-2 border-slate-300 pl-4 py-2">`;
+            html += `<div class="org-node cursor-pointer hover:shadow-lg" onclick="verPersona('${persona.id}')">
+                <div class="org-node-title">${persona.nombre}</div>
+                <div class="org-node-puesto">${persona.funcion || 'Sin Función'}</div>
+                <div class="org-node-grupo">${persona.grupo}</div>
+            </div>`;
 
-            const fotoHTML = p.foto
-                ? `<img src="${p.foto}" alt="Foto">`
-                : `<div class="photo-placeholder">SIN<br>FOTOGRAFÍA</div>`;
+            if (subordinados.length > 0) {
+                html += `<div class="mt-3 space-y-2">`;
+                subordinados.forEach(sub => {
+                    html += construirArbolPersona(sub, todosMiembros, nivel + 1);
+                });
+                html += `</div>`;
+            }
 
-            const edad = p.fecha_nac
-                ? (new Date().getFullYear() - new Date(p.fecha_nac).getFullYear()) + ' años'
-                : 'N/D';
-
-            const padresStr = [p.padre, p.madre].filter(Boolean).join(' / ') || 'N/D';
-
-            document.getElementById('printArea').innerHTML = `
-                <div class="print-header">
-                    <div>
-                        <div class="print-title">SIGEP</div>
-                        <div class="print-subtitle">Sistema de Gestión de Perfiles — Ficha de Inteligencia</div>
-                    </div>
-                    <div class="print-stamp">
-                        <div class="confidential">Confidencial</div>
-                        <div>ID: ${p.id || 'N/D'}</div>
-                        <div>${fechaImpresion} ${horaImpresion}</div>
-                    </div>
-                </div>
-
-                <div class="body-grid">
-                    <div>
-                        <div class="photo-box">${fotoHTML}</div>
-                        <div style="margin-top:10px">
-                            <div class="field-label">CURP</div>
-                            <div class="curp-val">${p.curp || 'N/D'}</div>
-                        </div>
-                        <div style="margin-top:8px">
-                            <div class="field-label">Estado Civil</div>
-                            <div class="field-value">${p.estado_civil || 'N/D'}</div>
-                        </div>
-                        <div>
-                            <div class="field-label">Estudios</div>
-                            <div class="field-value">${p.estudios || 'N/D'}</div>
-                        </div>
-                        <div>
-                            <div class="field-label">Origen</div>
-                            <div class="field-value">${p.origen || 'N/D'}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="nombre-val">${p.nombre || 'SIN NOMBRE'}</div>
-                        ${p.alias ? `<div class="alias-val">"${p.alias}"</div>` : ''}
-                        ${p.grupo ? `<div style="margin-top:6px"><span class="grupo-val">${p.grupo}</span></div>` : ''}
-
-                        <div class="section-title">Datos Personales</div>
-                        <div class="two-col">
-                            <div>
-                                <div class="field-label">Edad</div>
-                                <div class="field-value">${edad}</div>
-                            </div>
-                            <div>
-                                <div class="field-label">Fecha de Nacimiento</div>
-                                <div class="field-value">${p.fecha_nac ? new Date(p.fecha_nac + 'T12:00:00').toLocaleDateString('es-MX') : 'N/D'}</div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="field-label">Ocupación</div>
-                            <div class="field-value">${p.ocupacion || 'N/D'}</div>
-                        </div>
-
-                        <div class="section-title">Datos Operativos</div>
-                        <div class="two-col">
-                            <div>
-                                <div class="field-label">Función / Puesto</div>
-                                <div class="field-value">${p.funcion || 'N/D'}</div>
-                            </div>
-                            <div>
-                                <div class="field-label">Zona de Operación</div>
-                                <div class="field-value">${p.zona || 'N/D'}</div>
-                            </div>
-                        </div>
-                        <div class="two-col">
-                            <div>
-                                <div class="field-label">Mando Directo</div>
-                                <div class="field-value">${p.mando || 'N/D'}</div>
-                            </div>
-                            <div>
-                                <div class="field-label">Sueldo Estimado</div>
-                                <div class="field-value">${p.sueldo || 'N/D'}</div>
-                            </div>
-                        </div>
-
-                        <div class="section-title">Domicilio y Vínculos</div>
-                        <div>
-                            <div class="field-label">Domicilio Actual</div>
-                            <div class="field-value">${p.domicilio || 'N/D'}</div>
-                        </div>
-                        ${p.desc_domicilio ? `<div><div class="field-label">Descripción del inmueble</div><div class="field-value">${p.desc_domicilio}</div></div>` : ''}
-                        <div class="two-col">
-                            <div>
-                                <div class="field-label">Padres</div>
-                                <div class="field-value">${padresStr}</div>
-                            </div>
-                            <div>
-                                <div class="field-label">Pareja</div>
-                                <div class="field-value">${p.pareja || 'N/D'}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                ${p.observaciones ? `
-                <div class="obs-box">
-                    <div class="field-label" style="margin-bottom:4px">Observaciones y Notas</div>
-                    <p>${p.observaciones}</p>
-                </div>` : ''}
-
-                <div class="print-footer">
-                    <span>SIGEP — Base de Datos Local · Uso Interno</span>
-                    <span class="confidential">Documento Confidencial</span>
-                    <span>Impreso: ${fechaImpresion}</span>
-                </div>
-            `;
-
-            window.print();
+            html += `</div>`;
+            return html;
         }
 
+        // Inicializar
+        mostrarVista('directorio');
     </script>
 </body>
 </html>
