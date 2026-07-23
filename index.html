@@ -5,100 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGEP - Sistema de Gestión de Perfiles</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .toast-enter { transform: translateY(100%); opacity: 0; }
-        .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s ease-out; }
-        .toast-leave { transform: translateY(0); opacity: 1; }
-        .toast-leave-active { transform: translateY(100%); opacity: 0; transition: all 0.3s ease-in; }
 
-        @media print {
-            body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; }
-            @page { margin: 15mm; size: A4; }
-        }
-        #printArea {
-            display: none;
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            color: #1e293b;
-        }
-        #printArea .print-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 3px solid #0f172a;
-            padding-bottom: 10px;
-            margin-bottom: 16px;
-        }
-        #printArea .print-title { font-size: 22pt; font-weight: 900; letter-spacing: 4px; color: #0f172a; }
-        #printArea .print-subtitle { font-size: 8pt; color: #475569; letter-spacing: 2px; text-transform: uppercase; }
-        #printArea .print-stamp { font-size: 8pt; color: #94a3b8; text-align: right; }
-        #printArea .section-title {
-            font-size: 7.5pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #64748b;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
-            margin-top: 14px;
-        }
-        #printArea .body-grid { display: grid; grid-template-columns: 160px 1fr; gap: 20px; }
-        #printArea .photo-box {
-            width: 140px; height: 170px;
-            border: 2px solid #cbd5e1;
-            border-radius: 4px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-            flex-shrink: 0;
-        }
-        #printArea .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-        #printArea .photo-placeholder { color: #94a3b8; font-size: 8pt; text-align: center; }
-        #printArea .field-label { font-size: 7pt; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1px; }
-        #printArea .field-value { font-size: 10.5pt; font-weight: 600; color: #0f172a; margin-bottom: 8px; }
-        #printArea .alias-val { font-size: 13pt; font-weight: 900; color: #dc2626; font-style: italic; }
-        #printArea .nombre-val { font-size: 16pt; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-        #printArea .grupo-val { display: inline-block; background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 20px; font-size: 9pt; font-weight: 700; text-transform: uppercase; border: 1px solid #fca5a5; }
-        #printArea .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        #printArea .obs-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 12px; margin-top: 12px; }
-        #printArea .obs-box p { font-size: 9.5pt; color: #78350f; line-height: 1.5; white-space: pre-wrap; }
-        #printArea .print-footer { margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 8px; display: flex; justify-content: space-between; font-size: 7pt; color: #94a3b8; }
-        #printArea .curp-val { font-family: 'Courier New', monospace; font-size: 10pt; font-weight: 700; background: #f1f5f9; padding: 2px 6px; border-radius: 3px; }
-        #printArea .confidential { color: #dc2626; font-weight: 900; font-size: 9pt; letter-spacing: 2px; text-transform: uppercase; }
-
-        /* Estilos para red organizacional */
-        .org-tree svg { font-family: Arial, sans-serif; }
-        .org-tree .node circle { stroke-width: 2px; cursor: pointer; }
-        .org-tree .node text { font-size: 11px; text-anchor: middle; pointer-events: none; }
-        .org-tree .link { stroke: #999; stroke-opacity: 0.6; stroke-width: 2px; fill: none; }
-        .org-node { 
+        .org-node {
             display: inline-block;
             border: 2px solid #1e293b;
             border-radius: 8px;
-            padding: 10px 15px;
-            margin: 5px;
+            padding: 12px 16px;
+            margin: 6px;
             background: #f1f5f9;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .org-node:hover {
             background: #e0e7ff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
         }
-        .org-node-title { font-weight: bold; color: #0f172a; font-size: 13px; }
-        .org-node-puesto { font-size: 11px; color: #64748b; font-style: italic; }
-        .org-node-grupo { font-size: 10px; background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+        .org-node-title {
+            font-weight: bold;
+            color: #0f172a;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        .org-node-puesto {
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 3px;
+        }
+        .org-node-grupo {
+            font-size: 10px;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        .org-tree-level {
+            margin-left: 20px;
+            padding-left: 15px;
+            border-left: 2px solid #cbd5e1;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex overflow-hidden font-sans text-gray-800">
@@ -111,19 +66,15 @@
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
             <a href="javascript:void(0)" id="navDirectorio" onclick="mostrarVista('directorio')" class="flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-2"></path></svg>
                 <span class="font-medium">Directorio</span>
             </a>
             <a href="javascript:void(0)" id="navEstadisticas" onclick="mostrarVista('estadisticas')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6"></path></svg>
                 <span class="font-medium">Estadísticas</span>
             </a>
-            <a href="javascript:void(0)" id="navRed" onclick="mostrarVista('red')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4"></path></svg>
-                <span class="font-medium">Mapa de Red</span>
-            </a>
             <a href="javascript:void(0)" id="navOrganizacional" onclick="mostrarVista('organizacional')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.217m-7.783 0h5.214m0 0a1 1 0 001.366.366l1.4-1m-2.766 2.634h-.183a2 2 0 01-2-2v-2.5"></path></svg>
                 <span class="font-medium">Estructura Org.</span>
             </a>
 
@@ -132,12 +83,12 @@
             </div>
 
             <button onclick="exportarDatos()" class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0"></path></svg>
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"></path></svg>
                 <span class="font-medium text-sm">Exportar Respaldo</span>
             </button>
 
             <label class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left cursor-pointer">
-                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0"></path></svg>
+                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"></path></svg>
                 <span class="font-medium text-sm">Restaurar Respaldo</span>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importarDatos(event)">
             </label>
@@ -149,24 +100,16 @@
 
     <!-- Contenido Principal -->
     <main class="flex-1 flex flex-col h-full relative overflow-hidden">
-        <!-- Header Móvil -->
-        <header class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
-            <h1 class="text-xl font-bold text-blue-400">SIGEP</h1>
-            <div class="flex gap-2">
-                <button onclick="exportarDatos()" class="text-xs border border-green-600 text-green-400 px-2 py-1 rounded">Exp</button>
-            </div>
-        </header>
-
         <!-- Topbar -->
         <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0">
             <div class="relative w-full sm:w-96">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2"></path></svg>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre, alias, ocupación o grupo..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                <input type="text" id="searchInput" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
             </div>
             <button onclick="abrirModalForm()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Nuevo Registro
             </button>
         </header>
@@ -175,309 +118,127 @@
         <div id="vistaEstadisticas" class="hidden flex-1 overflow-auto p-4 sm:p-6">
             <div class="mb-6">
                 <h2 class="text-2xl font-black text-slate-800">Panel Estadístico</h2>
-                <p class="text-sm text-slate-500 mt-1">Resumen analítico de la base de datos</p>
+                <p class="text-sm text-slate-500 mt-1">Resumen de la base de datos</p>
             </div>
 
-            <!-- KPI Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Registros</span>
-                    <span id="stat_total" class="text-4xl font-black text-slate-800">0</span>
-                    <span class="text-xs text-slate-400 mt-1">en la base de datos</span>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Grupos Distintos</span>
-                    <span id="stat_grupos" class="text-4xl font-black text-red-700">0</span>
-                    <span class="text-xs text-slate-400 mt-1">organizaciones</span>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Zonas de Operación</span>
-                    <span id="stat_zonas" class="text-4xl font-black text-blue-700">0</span>
-                    <span class="text-xs text-slate-400 mt-1">zonas registradas</span>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border p-5 flex flex-col">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Edad Promedio</span>
-                    <span id="stat_edad" class="text-4xl font-black text-green-700">—</span>
-                    <span class="text-xs text-slate-400 mt-1">años</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <!-- Top Grupos -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2"></path></svg>
-                        Registros por Grupo Delictivo
-                    </h3>
-                    <div id="stat_grupos_lista" class="space-y-3"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Total Registros</span>
+                    <span id="stat_total" class="text-3xl font-black text-slate-800">0</span>
                 </div>
-
-                <!-- Top Zonas -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657"></path></svg>
-                        Registros por Zona de Operación
-                    </h3>
-                    <div id="stat_zonas_lista" class="space-y-3"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Grupos</span>
+                    <span id="stat_grupos" class="text-3xl font-black text-red-700">0</span>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Distribución de Edades -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0"></path></svg>
-                        Distribución por Rango de Edad
-                    </h3>
-                    <div id="stat_edades_lista" class="space-y-3"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Zonas</span>
+                    <span id="stat_zonas" class="text-3xl font-black text-blue-700">0</span>
                 </div>
-
-                <!-- Top Funciones -->
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255"></path></svg>
-                        Funciones / Puestos más Frecuentes
-                    </h3>
-                    <div id="stat_funciones_lista" class="space-y-3"></div>
+                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Edad Prom.</span>
+                    <span id="stat_edad" class="text-3xl font-black text-green-700">—</span>
                 </div>
             </div>
         </div>
 
-        <!-- Vista Mapa de Red (Gráfico de Nodos) -->
-        <div id="vistaRed" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
-            <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                <div class="bg-slate-900/90 backdrop-blur rounded-xl border border-slate-700 px-4 py-3 text-white shadow-xl">
-                    <h2 class="text-sm font-black text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172"></path></svg>
-                        Mapa de Red
-                    </h2>
-                    <p id="redStats" class="text-xs text-slate-400">Cargando...</p>
-                </div>
-            </div>
-            <canvas id="redCanvas" class="w-full h-full"></canvas>
-            <div id="redVacio" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-500">
-                <svg class="w-16 h-16 mb-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13.828 10.172"></path></svg>
-                <p class="text-lg font-bold text-slate-600">Sin vínculos registrados</p>
-                <p class="text-sm text-slate-700 mt-1">Edita un perfil y agrega vínculos para visualizarlos aquí.</p>
-            </div>
-        </div>
-
-        <!-- Vista Estructura Organizacional (Árbol Jerárquico) -->
+        <!-- Vista Estructura Organizacional -->
         <div id="vistaOrganizacional" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50">
             <div class="px-6 py-4 border-b bg-white shadow-sm shrink-0 flex items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-black text-slate-800">Estructura Organizacional - Estilo FBI</h2>
-                    <p class="text-xs text-slate-500 mt-1">Visualización jerárquica de la organización criminal</p>
+                    <h2 class="text-xl font-black text-slate-800">Estructura Organizacional - FBI</h2>
+                    <p class="text-xs text-slate-500 mt-1">Jerarquía por grupo delictivo</p>
                 </div>
-                <select id="orgSelectGrupo" onchange="actualizarEstructuraOrganizacional()" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
+                <select id="orgSelectGrupo" onchange="actualizarEstructuraOrganizacional()" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">Seleccionar grupo...</option>
                 </select>
             </div>
             <div id="orgTreeContainer" class="flex-1 overflow-auto p-6">
-                <div id="orgVacio" class="flex items-center justify-center h-full text-slate-500">
+                <div id="orgVacio" class="flex items-center justify-center h-full text-slate-400">
                     <div class="text-center">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
-                        <p class="text-lg font-semibold">Selecciona un grupo para ver su estructura</p>
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
+                        <p class="text-lg font-semibold">Selecciona un grupo</p>
                     </div>
                 </div>
-                <div id="orgTree"></div>
+                <div id="orgTree" class="space-y-4"></div>
             </div>
         </div>
 
-        <!-- Vista Directorio (Tabla de Datos) -->
+        <!-- Vista Directorio -->
         <div id="vistaDirectorio" class="flex-1 overflow-auto p-4 sm:p-6">
             <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Perfil</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Datos Operativos</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Ubicación</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Perfil</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden sm:table-cell">Datos</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden lg:table-cell">Zona</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaBody" class="bg-white divide-y divide-gray-200">
                     </tbody>
                 </table>
                 <div id="emptyState" class="hidden p-10 text-center text-gray-500">
-                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17"></path></svg>
-                    <p class="text-lg font-medium text-gray-900">No hay registros</p>
-                    <p class="mt-1">Agrega una persona o Importa un respaldo.</p>
+                    <p class="text-lg font-medium">No hay registros</p>
                 </div>
             </div>
         </div>
     </main>
 
     <!-- Modal Formulario -->
-    <div id="modalForm" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-2 sm:p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col transform scale-95 transition-transform duration-300" id="modalFormContent">
-
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl shrink-0">
-                <h2 id="modalFormTitle" class="text-xl font-bold text-gray-800">Nuevo Registro</h2>
-                <button onclick="cerrarModalForm()" class="text-gray-400 hover:text-gray-600 transition">
+    <div id="modalForm" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h2 class="text-xl font-bold text-gray-800">Nuevo Registro</h2>
+                <button onclick="cerrarModalForm()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
             <div class="p-6 overflow-y-auto flex-1">
-                <form id="personaForm" class="space-y-8">
-                    <input type="hidden" id="registroId">
-                    <input type="hidden" id="fotoBase64">
-
-                    <div class="flex flex-col md:flex-row gap-6 items-start">
-                        <div class="flex flex-col items-center space-y-3 w-full md:w-48 shrink-0">
-                            <div class="w-32 h-32 rounded-full border-4 border-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center relative group">
-                                <img id="previewFoto" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover hidden">
-                                <svg id="placeholderFoto" class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7"></path></svg>
-                                <label class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center cursor-pointer text-white text-xs font-medium transition">
-                                    Subir Foto
-                                    <input type="file" id="fotoInput" accept="image/*" class="hidden">
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                            <div class="col-span-1 md:col-span-2 lg:col-span-3 border-b pb-2 mb-2">
-                                <h3 class="text-lg font-semibold text-gray-800">Datos Personales</h3>
-                            </div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre Completo *</label><input type="text" id="f_nombre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Alias / Apodo</label><input type="text" id="f_alias" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Ocupación / Oficio</label><input type="text" id="f_ocupacion" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Fecha de Nacimiento</label><input type="date" id="f_fecha_nac" onchange="calcularEdadForm()" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Edad</label><input type="number" id="f_edad" class="w-full p-2 border rounded bg-gray-50" readonly></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">CURP</label><input type="text" id="f_curp" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Estado Civil</label>
-                                <select id="f_estado_civil" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Soltero(a)">Soltero(a)</option>
-                                    <option value="Casado(a)">Casado(a)</option>
-                                    <option value="Unión Libre">Unión Libre</option>
-                                    <option value="Divorciado(a)">Divorciado(a)</option>
-                                    <option value="Viudo(a)">Viudo(a)</option>
-                                </select>
-                            </div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Grado de Estudios</label><input type="text" id="f_estudios" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Lugar de Origen</label><input type="text" id="f_origen" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50 p-4 rounded-lg border">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Familia y Vínculos</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre del Padre</label><input type="text" id="f_padre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Nombre de la Madre</label><input type="text" id="f_madre" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Hermanos</label><input type="text" id="f_hermanos" placeholder="Nombres separados por comas..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Domicilio de los Padres</label><input type="text" id="f_dom_padres" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Pareja Sentimental</label><input type="text" id="f_pareja" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-bold text-gray-700 mb-1">Hijos (Edades/Nombres)</label><input type="text" id="f_hijos" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="personaForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Domicilio Actual</h3>
-                            <div class="space-y-4">
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Dirección Completa</label><textarea id="f_domicilio" rows="2" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea></div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Descripción del Domicilio</label><textarea id="f_desc_domicilio" rows="2" placeholder="Color de fachada, referencias..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea></div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Tiempo habitando el domicilio</label><input type="text" id="f_tiempo_dom" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                            </div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Nombre Completo *</label>
+                            <input type="text" id="f_nombre" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
                         </div>
-
-                        <div class="bg-red-50/50 p-4 rounded-lg border border-red-100">
-                            <h3 class="text-lg font-bold text-red-700 mb-4 border-b border-red-200 pb-2">Datos Operativos</h3>
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="col-span-2"><label class="block text-xs font-bold text-red-800 mb-1">Grupo Delictivo *</label><input type="text" id="f_grupo" class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500"></div>
-                                    <div class="col-span-2"><label class="block text-xs font-bold text-gray-700 mb-1">Función / Puesto</label><input type="text" id="f_funcion" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                                </div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Zona de Operación</label><input type="text" id="f_zona" class="w-full p-2 border rounded focus:ring-red-500 focus:border-red-500"></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Mando Directo (Jefe)</label><input type="text" id="f_mando" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                                    <div><label class="block text-xs font-bold text-gray-700 mb-1">Sueldo / Ingreso Est.</label><input type="text" id="f_sueldo" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                                </div>
-                                <div><label class="block text-xs font-bold text-gray-700 mb-1">Antigüedad en la organización</label><input type="text" id="f_antiguedad" class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></div>
-                                <div class="bg-red-100 border border-red-300 rounded-lg p-3 flex items-center gap-3">
-                                    <input type="checkbox" id="f_orden_aprehension" onchange="document.getElementById('f_orden_detalle_wrap').classList.toggle('hidden')" class="w-5 h-5 accent-red-600 shrink-0 cursor-pointer">
-                                    <div>
-                                        <label for="f_orden_aprehension" class="text-sm font-black text-red-800 cursor-pointer">Orden de Aprehensión Activa</label>
-                                        <p class="text-xs text-red-600">Marcar si existe orden judicial vigente</p>
-                                    </div>
-                                </div>
-                                <div id="f_orden_detalle_wrap" class="hidden">
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Detalles de la Orden</label>
-                                    <input type="text" id="f_orden_detalle" placeholder="Ej. OA-2024-0123, Juzgado 4°..." class="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500">
-                                </div>
-                            </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Alias</label>
+                            <input type="text" id="f_alias" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Grupo Delictivo *</label>
+                            <input type="text" id="f_grupo" class="w-full p-2 border border-red-300 rounded focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Función/Puesto</label>
+                            <input type="text" id="f_funcion" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Mando Directo (Jefe)</label>
+                            <input type="text" id="f_mando" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">Zona de Operación</label>
+                            <input type="text" id="f_zona" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2 border-b pb-2">Observaciones Generales</h3>
-                        <textarea id="f_observaciones" rows="3" placeholder="Tatuajes, vehículos, antecedentes..." class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-
-                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                        <h3 class="text-lg font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172"></path></svg>
-                            Vínculos con Registros SIGEP
-                        </h3>
-                        <p class="text-xs text-indigo-600 mb-3">Enlaza este perfil con otros registros para mapear la red.</p>
-                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <select id="f_rel_persona" class="flex-1 p-2 border border-indigo-200 rounded focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
-                                <option value="">— Seleccionar persona —</option>
-                            </select>
-                            <select id="f_rel_tipo" class="p-2 border border-indigo-200 rounded focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
-                                <option value="asociado a">Asociado a</option>
-                                <option value="subordinado de">Subordinado de</option>
-                                <option value="mando de">Mando de</option>
-                                <option value="familiar de">Familiar de</option>
-                                <option value="cómplice de">Cómplice de</option>
-                            </select>
-                            <button type="button" onclick="agregarRelacion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded transition whitespace-nowrap">+ Agregar</button>
-                        </div>
-                        <div id="listaRelacionesForm" class="space-y-2"></div>
-                    </div>
-
-                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-4 border-b border-slate-300 pb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4"></path></svg>
-                            Historial de Eventos
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-3">Registra detenciones, avistamientos, etc.</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                            <input type="date" id="f_ev_fecha" class="p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500 bg-white text-sm">
-                            <select id="f_ev_tipo" class="p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500 bg-white text-sm">
-                                <option value="Avistamiento">Avistamiento</option>
-                                <option value="Detención">Detención</option>
-                                <option value="Incidente">Incidente</option>
-                                <option value="Reunión">Reunión</option>
-                            </select>
-                            <button type="button" onclick="agregarEvento()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold rounded transition">+ Agregar</button>
-                        </div>
-                        <textarea id="f_ev_desc" rows="2" placeholder="Descripción del evento..." class="w-full p-2 border border-slate-300 rounded focus:ring-slate-500 focus:border-slate-500"></textarea>
-                        <div id="listaEventosForm" class="space-y-2"></div>
-                    </div>
+                    <input type="hidden" id="registroId">
                 </form>
             </div>
 
-            <div class="px-6 py-4 border-t bg-gray-100 rounded-b-xl flex justify-between items-center gap-3 shrink-0">
-                <div class="flex gap-3">
-                    <button type="button" onclick="cerrarModalForm()" class="px-5 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">Cancelar</button>
-                    <button type="button" onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition">Guardar</button>
-                </div>
+            <div class="px-6 py-4 border-t bg-gray-100 rounded-b-xl flex justify-end gap-3">
+                <button onclick="cerrarModalForm()" class="px-5 py-2 text-gray-700 bg-white border rounded hover:bg-gray-50">Cancelar</button>
+                <button onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">Guardar</button>
             </div>
         </div>
     </div>
 
-    <!-- Contenedor Notificaciones -->
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-[70] flex flex-col gap-2"></div>
+    <!-- Notificaciones -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
     <script>
         let personas = [];
-        let currentPersonaId = null;
-        let formRelaciones = [];
-        let formEventos = [];
 
         window.onload = function() {
             const storedData = localStorage.getItem('sigep_data');
@@ -486,186 +247,40 @@
             }
             renderTable();
             document.getElementById('searchInput').addEventListener('input', renderTable);
-            document.getElementById('fotoInput').addEventListener('change', handleImageUpload);
+            mostrarVista('directorio');
         };
 
         function mostrarVista(vista) {
-            const dirEl = document.getElementById('vistaDirectorio');
-            const statEl = document.getElementById('vistaEstadisticas');
-            const redEl = document.getElementById('vistaRed');
-            const orgEl = document.getElementById('vistaOrganizacional');
-            
-            dirEl.classList.add('hidden');
-            statEl.classList.add('hidden');
-            redEl.classList.add('hidden');
-            orgEl.classList.add('hidden');
+            document.getElementById('vistaDirectorio').classList.add('hidden');
+            document.getElementById('vistaEstadisticas').classList.add('hidden');
+            document.getElementById('vistaOrganizacional').classList.add('hidden');
 
-            document.getElementById('navDirectorio').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'directorio');
-            document.getElementById('navEstadisticas').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'estadisticas');
-            document.getElementById('navRed').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'red');
-            document.getElementById('navOrganizacional').classList.toggle('bg-blue-600/20 text-blue-400', vista === 'organizacional');
+            document.getElementById('navDirectorio').classList.remove('bg-blue-600/20', 'text-blue-400');
+            document.getElementById('navEstadisticas').classList.remove('bg-blue-600/20', 'text-blue-400');
+            document.getElementById('navOrganizacional').classList.remove('bg-blue-600/20', 'text-blue-400');
 
             if (vista === 'estadisticas') {
-                statEl.classList.remove('hidden');
+                document.getElementById('vistaEstadisticas').classList.remove('hidden');
+                document.getElementById('navEstadisticas').classList.add('bg-blue-600/20', 'text-blue-400');
                 renderEstadisticas();
-            } else if (vista === 'red') {
-                redEl.classList.remove('hidden');
-                setTimeout(iniciarMapaRed, 50);
             } else if (vista === 'organizacional') {
-                orgEl.classList.remove('hidden');
+                document.getElementById('vistaOrganizacional').classList.remove('hidden');
+                document.getElementById('navOrganizacional').classList.add('bg-blue-600/20', 'text-blue-400');
                 cargarSelectGrupos();
             } else {
-                dirEl.classList.remove('hidden');
+                document.getElementById('vistaDirectorio').classList.remove('hidden');
+                document.getElementById('navDirectorio').classList.add('bg-blue-600/20', 'text-blue-400');
             }
         }
 
-        function calcularEdad(fechaNac) {
-            if (!fechaNac) return null;
-            const nac = new Date(fechaNac);
-            const hoy = new Date();
-            let e = hoy.getFullYear() - nac.getFullYear();
-            if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) e--;
-            return e;
-        }
-
-        function renderBarras(containerId, datos, colorClass) {
-            const el = document.getElementById(containerId);
-            if (!el) return;
-            if (datos.length === 0) {
-                el.innerHTML = '<p class="text-sm text-slate-400 italic">Sin datos suficientes.</p>';
-                return;
-            }
-            const max = datos[0][1];
-            el.innerHTML = datos.map(([label, count]) => {
-                const pct = max > 0 ? Math.round((count / max) * 100) : 0;
-                return `
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-semibold text-slate-700 truncate max-w-[200px]" title="${label}">${label}</span>
-                        <span class="text-xs font-black text-slate-800 ml-2 shrink-0">${count}</span>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2">
-                        <div class="${colorClass} h-2 rounded-full transition-all duration-500" style="width:${pct}%"></div>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderEstadisticas() {
-            const total = personas.length;
-            document.getElementById('stat_total').innerText = total;
-
-            const gruposMap = {};
-            const zonasMap = {};
-            const funcionesMap = {};
-            const edades = [];
-
-            personas.forEach(p => {
-                const g = (p.grupo || 'Sin Grupo').toUpperCase().trim();
-                gruposMap[g] = (gruposMap[g] || 0) + 1;
-
-                const z = (p.zona || '').trim();
-                if (z) zonasMap[z] = (zonasMap[z] || 0) + 1;
-
-                const f = (p.funcion || '').trim();
-                if (f) funcionesMap[f] = (funcionesMap[f] || 0) + 1;
-
-                const edad = calcularEdad(p.fecha_nac);
-                if (edad !== null && edad > 0 && edad < 120) edades.push(edad);
-            });
-
-            document.getElementById('stat_grupos').innerText = Object.keys(gruposMap).length;
-            document.getElementById('stat_zonas').innerText = Object.keys(zonasMap).length;
-
-            if (edades.length > 0) {
-                const prom = Math.round(edades.reduce((a, b) => a + b, 0) / edades.length);
-                document.getElementById('stat_edad').innerText = prom;
-            } else {
-                document.getElementById('stat_edad').innerText = '—';
-            }
-
-            const sortedGrupos = Object.entries(gruposMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-            renderBarras('stat_grupos_lista', sortedGrupos, 'bg-red-500');
-
-            const sortedZonas = Object.entries(zonasMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-            renderBarras('stat_zonas_lista', sortedZonas, 'bg-blue-500');
-
-            const sortedFunciones = Object.entries(funcionesMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-            renderBarras('stat_funciones_lista', sortedFunciones, 'bg-purple-500');
-
-            const rangos = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56+': 0 };
-            edades.forEach(e => {
-                if (e <= 25) rangos['18-25']++;
-                else if (e <= 35) rangos['26-35']++;
-                else if (e <= 45) rangos['36-45']++;
-                else if (e <= 55) rangos['46-55']++;
-                else rangos['56+']++;
-            });
-
-            const rangosData = Object.entries(rangos).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-            renderBarras('stat_edades_lista', rangosData, 'bg-green-500');
-        }
-
-        function guardarDatosLocales() {
-            localStorage.setItem('sigep_data', JSON.stringify(personas));
-        }
-
-        function showToast(mensaje, tipo = 'success') {
+        function showToast(msg, tipo = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-
-            let bgClass = tipo === 'success' ? 'bg-green-600' : 'bg-red-600';
-            let icon = tipo === 'success'
-                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
-                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path>';
-
-            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-start max-w-sm gap-3`;
-            toast.innerHTML = `<svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg><p class="text-sm font-medium">${mensaje}</p>`;
-
+            const bgClass = tipo === 'success' ? 'bg-green-600' : 'bg-red-600';
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg`;
+            toast.textContent = msg;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
-        }
-
-        function exportarDatos() {
-            if (personas.length === 0) {
-                showToast("No hay registros para exportar.", "error");
-                return;
-            }
-            const dataStr = JSON.stringify(personas, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            const fecha = new Date().toISOString().split('T')[0];
-            a.download = `sigep_respaldo_${fecha}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("Respaldo descargado exitosamente.");
-        }
-
-        function importarDatos(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importado = JSON.parse(e.target.result);
-                    if (Array.isArray(importado)) {
-                        personas = importado;
-                        guardarDatosLocales();
-                        renderTable();
-                        showToast("Base de datos restaurada correctamente.");
-                    } else {
-                        showToast("Formato de archivo incorrecto.", "error");
-                    }
-                } catch (err) {
-                    showToast("Error al leer el archivo.", "error");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
         }
 
         function renderTable() {
@@ -674,10 +289,8 @@
             const term = document.getElementById('searchInput').value.toLowerCase();
 
             tbody.innerHTML = '';
-
             const filtrados = personas.filter(p =>
                 (p.nombre || '').toLowerCase().includes(term) ||
-                (p.alias || '').toLowerCase().includes(term) ||
                 (p.grupo || '').toLowerCase().includes(term)
             );
 
@@ -685,37 +298,14 @@
                 emptyState.classList.remove('hidden');
             } else {
                 emptyState.classList.add('hidden');
-
-                filtrados.reverse().forEach(p => {
+                filtrados.forEach(p => {
                     const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-slate-50 transition';
-
-                    let renderImagen = p.foto
-                        ? `<img class="h-12 w-12 object-cover" src="${p.foto}" alt="">`
-                        : `<svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7"></path></svg>`;
-
                     tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-slate-200">
-                                    ${renderImagen}
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-black text-gray-900">${p.nombre || 'DESCONOCIDO'}</div>
-                                    <div class="text-xs font-semibold text-red-600">${p.alias ? `"${p.alias}"` : ''}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 hidden sm:table-cell">
-                            <span class="px-2.5 py-0.5 inline-flex text-xs font-bold rounded bg-red-100 text-red-800">
-                                ${p.grupo || 'Sin Grupo'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 hidden lg:table-cell">
-                            <div class="text-sm font-semibold">${p.zona || '-'}</div>
-                        </td>
-                        <td class="px-4 py-4 text-center">
-                            <button onclick="verPersona('${p.id}')" class="text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-1.5 rounded transition">Ver</button>
+                        <td class="px-6 py-4">${p.nombre || 'SIN NOMBRE'}</td>
+                        <td class="px-6 py-4 hidden sm:table-cell">${p.grupo || '-'}</td>
+                        <td class="px-6 py-4 hidden lg:table-cell">${p.zona || '-'}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="editarPersona('${p.id}')" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">Editar</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -723,224 +313,121 @@
             }
         }
 
+        function renderEstadisticas() {
+            const total = personas.length;
+            document.getElementById('stat_total').textContent = total;
+
+            const gruposSet = new Set(personas.map(p => p.grupo).filter(Boolean));
+            const zonasSet = new Set(personas.map(p => p.zona).filter(Boolean));
+            
+            document.getElementById('stat_grupos').textContent = gruposSet.size;
+            document.getElementById('stat_zonas').textContent = zonasSet.size;
+            document.getElementById('stat_edad').textContent = '—';
+        }
+
         function abrirModalForm() {
             document.getElementById('personaForm').reset();
             document.getElementById('registroId').value = '';
-            document.getElementById('fotoBase64').value = '';
-            document.getElementById('modalFormTitle').innerText = 'Nuevo Registro';
-            formRelaciones = [];
-            formEventos = [];
-
             const modal = document.getElementById('modalForm');
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
-                document.getElementById('modalFormContent').classList.remove('scale-95');
             }, 10);
         }
 
         function cerrarModalForm() {
             const modal = document.getElementById('modalForm');
             modal.classList.add('opacity-0');
-            document.getElementById('modalFormContent').classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64 = e.target.result;
-                    document.getElementById('fotoBase64').value = base64;
-                    document.getElementById('previewFoto').src = base64;
-                    document.getElementById('previewFoto').classList.remove('hidden');
-                    document.getElementById('placeholderFoto').classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function calcularEdadForm() {
-            const fechaStr = document.getElementById('f_fecha_nac').value;
-            if (fechaStr) {
-                const edad = calcularEdad(fechaStr);
-                document.getElementById('f_edad').value = edad || '';
-            }
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
         }
 
         function guardarRegistro() {
-            let nombre = document.getElementById('f_nombre').value.trim();
+            const nombre = document.getElementById('f_nombre').value.trim();
             const grupo = document.getElementById('f_grupo').value.trim();
 
             if (!nombre || !grupo) {
-                showToast("Nombre y Grupo son obligatorios.", "error");
+                showToast('Nombre y Grupo son obligatorios', 'error');
                 return;
             }
 
-            const personaData = {
-                id: document.getElementById('registroId').value || 'SIGEP-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            const persona = {
+                id: document.getElementById('registroId').value || 'SIGEP-' + Math.random().toString(36).substr(2, 9),
                 nombre: nombre.toUpperCase(),
                 alias: document.getElementById('f_alias').value,
-                ocupacion: document.getElementById('f_ocupacion').value,
-                fecha_nac: document.getElementById('f_fecha_nac').value,
-                curp: document.getElementById('f_curp').value.toUpperCase(),
                 grupo: grupo,
                 funcion: document.getElementById('f_funcion').value,
-                zona: document.getElementById('f_zona').value,
                 mando: document.getElementById('f_mando').value,
-                sueldo: document.getElementById('f_sueldo').value,
-                domicilio: document.getElementById('f_domicilio').value,
-                foto: document.getElementById('fotoBase64').value
+                zona: document.getElementById('f_zona').value
             };
 
-            const idx = personas.findIndex(p => p.id === personaData.id);
+            const idx = personas.findIndex(p => p.id === persona.id);
             if (idx >= 0) {
-                personas[idx] = personaData;
+                personas[idx] = persona;
             } else {
-                personas.push(personaData);
+                personas.push(persona);
             }
 
-            guardarDatosLocales();
+            localStorage.setItem('sigep_data', JSON.stringify(personas));
             renderTable();
             cerrarModalForm();
-            showToast("Registro guardado exitosamente.");
+            showToast('Registro guardado');
         }
 
-        function verPersona(id) {
-            console.log("Ver persona:", id);
+        function editarPersona(id) {
+            const persona = personas.find(p => p.id === id);
+            if (!persona) return;
+
+            document.getElementById('f_nombre').value = persona.nombre;
+            document.getElementById('f_alias').value = persona.alias || '';
+            document.getElementById('f_grupo').value = persona.grupo || '';
+            document.getElementById('f_funcion').value = persona.funcion || '';
+            document.getElementById('f_mando').value = persona.mando || '';
+            document.getElementById('f_zona').value = persona.zona || '';
+            document.getElementById('registroId').value = id;
+
+            abrirModalForm();
         }
 
-        function agregarRelacion() {
-            const rel = {
-                persona: document.getElementById('f_rel_persona').value,
-                tipo: document.getElementById('f_rel_tipo').value
-            };
-            if (rel.persona) {
-                formRelaciones.push(rel);
-                showToast("Relación agregada.");
+        function exportarDatos() {
+            if (personas.length === 0) {
+                showToast('No hay datos para exportar', 'error');
+                return;
             }
+            const dataStr = JSON.stringify(personas, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sigep_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Respaldo descargado');
         }
 
-        function agregarEvento() {
-            const evt = {
-                fecha: document.getElementById('f_ev_fecha').value,
-                tipo: document.getElementById('f_ev_tipo').value,
-                desc: document.getElementById('f_ev_desc').value
-            };
-            if (evt.fecha) {
-                formEventos.push(evt);
-                showToast("Evento agregado.");
-            }
-        }
-
-        // ===== FUNCIONES DE MAPA DE RED =====
-        let redCanvas, redCtx, redNodes = [], redLinks = [];
-        let redPanning = false, redStartX, redStartY, redOffsetX = 0, redOffsetY = 0, redZoom = 1;
-
-        function iniciarMapaRed() {
-            redCanvas = document.getElementById('redCanvas');
-            redCtx = redCanvas.getContext('2d');
-
-            redCanvas.width = redCanvas.offsetWidth;
-            redCanvas.height = redCanvas.offsetHeight;
-
-            generarRedNodos();
-            dibujarRed();
-
-            redCanvas.addEventListener('mousedown', (e) => { redPanning = true; redStartX = e.clientX; redStartY = e.clientY; });
-            redCanvas.addEventListener('mousemove', (e) => {
-                if (redPanning) {
-                    redOffsetX += e.clientX - redStartX;
-                    redOffsetY += e.clientY - redStartY;
-                    redStartX = e.clientX;
-                    redStartY = e.clientY;
-                    dibujarRed();
-                }
-            });
-            redCanvas.addEventListener('mouseup', () => { redPanning = false; });
-            redCanvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                redZoom *= e.deltaY > 0 ? 0.9 : 1.1;
-                redZoom = Math.max(0.1, Math.min(5, redZoom));
-                dibujarRed();
-            });
-        }
-
-        function generarRedNodos() {
-            redNodes = [];
-            redLinks = [];
-
-            personas.forEach((p, i) => {
-                redNodes.push({
-                    id: p.id,
-                    nombre: p.nombre,
-                    grupo: p.grupo,
-                    x: Math.random() * redCanvas.width,
-                    y: Math.random() * redCanvas.height
-                });
-            });
-
-            // Simular fuerzas gravitacionales entre nodos
-            for (let i = 0; i < 20; i++) {
-                let changed = false;
-                redNodes.forEach((n1, idx1) => {
-                    redNodes.forEach((n2, idx2) => {
-                        if (idx1 === idx2) return;
-                        const dx = n2.x - n1.x;
-                        const dy = n2.y - n1.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < 50) {
-                            n1.x -= (dx / dist) * 2;
-                            n1.y -= (dy / dist) * 2;
-                            changed = true;
-                        }
-                    });
-                });
-                if (!changed) break;
-            }
-        }
-
-        function dibujarRed() {
-            redCtx.clearRect(0, 0, redCanvas.width, redCanvas.height);
-            redCtx.save();
-            redCtx.translate(redOffsetX, redOffsetY);
-            redCtx.scale(redZoom, redZoom);
-
-            // Dibujar líneas
-            redCtx.strokeStyle = '#475569';
-            redCtx.lineWidth = 1;
-            redNodes.forEach(n => {
-                redNodes.forEach(n2 => {
-                    if (Math.random() < 0.1) {
-                        redCtx.beginPath();
-                        redCtx.moveTo(n.x, n.y);
-                        redCtx.lineTo(n2.x, n2.y);
-                        redCtx.stroke();
+        function importarDatos(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importado = JSON.parse(e.target.result);
+                    if (Array.isArray(importado)) {
+                        personas = importado;
+                        localStorage.setItem('sigep_data', JSON.stringify(personas));
+                        renderTable();
+                        showToast('Base restaurada');
                     }
-                });
-            });
-
-            // Dibujar nodos
-            redNodes.forEach(n => {
-                const colors = { 'GRUPO A': '#dc2626', 'GRUPO B': '#2563eb', 'GRUPO C': '#7c3aed' };
-                const color = colors[n.grupo] || '#64748b';
-                
-                redCtx.fillStyle = color;
-                redCtx.beginPath();
-                redCtx.arc(n.x, n.y, 15, 0, Math.PI * 2);
-                redCtx.fill();
-
-                redCtx.fillStyle = '#fff';
-                redCtx.font = 'bold 10px Arial';
-                redCtx.textAlign = 'center';
-                redCtx.fillText(n.nombre.substring(0, 3), n.x, n.y + 4);
-            });
-
-            redCtx.restore();
+                } catch {
+                    showToast('Error en archivo', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
 
-        // ===== FUNCIONES DE ESTRUCTURA ORGANIZACIONAL =====
+        // === ESTRUCTURA ORGANIZACIONAL ===
         function cargarSelectGrupos() {
             const select = document.getElementById('orgSelectGrupo');
             const grupos = [...new Set(personas.map(p => p.grupo).filter(Boolean))].sort();
@@ -967,46 +454,37 @@
 
             vacio.classList.add('hidden');
 
-            // Filtrar personas del grupo
             const miembros = personas.filter(p => p.grupo === grupo);
-
             if (miembros.length === 0) {
-                container.innerHTML = '<p class="text-slate-500">Sin miembros en este grupo.</p>';
+                container.innerHTML = '<p class="text-slate-500">Sin miembros</p>';
                 return;
             }
 
-            // Construir árbol jerárquico
-            const jefes = miembros.filter(p => !p.mando);
+            const jefes = miembros.filter(p => !p.mando || p.mando === '');
             const html = jefes.map(jefe => construirArbolPersona(jefe, miembros)).join('');
 
-            container.innerHTML = `<div class="space-y-6">${html}</div>`;
+            container.innerHTML = html;
         }
 
         function construirArbolPersona(persona, todosMiembros, nivel = 0) {
-            const subordinados = todosMiembros.filter(p => p.mando === persona.nombre);
-            const indent = 'ml-' + (nivel * 6);
+            const subordinados = todosMiembros.filter(p => p.mando && p.mando.toUpperCase() === persona.nombre.toUpperCase());
 
-            let html = `<div class="${indent} border-l-2 border-slate-300 pl-4 py-2">`;
-            html += `<div class="org-node cursor-pointer hover:shadow-lg" onclick="verPersona('${persona.id}')">
-                <div class="org-node-title">${persona.nombre}</div>
-                <div class="org-node-puesto">${persona.funcion || 'Sin Función'}</div>
-                <div class="org-node-grupo">${persona.grupo}</div>
-            </div>`;
+            let html = `<div class="${nivel > 0 ? 'org-tree-level' : ''}">
+                <div class="org-node">
+                    <div class="org-node-title">${persona.nombre}</div>
+                    <div class="org-node-puesto">${persona.funcion || 'Sin Función'}</div>
+                    <div class="org-node-grupo">${persona.grupo}</div>
+                </div>`;
 
             if (subordinados.length > 0) {
-                html += `<div class="mt-3 space-y-2">`;
                 subordinados.forEach(sub => {
                     html += construirArbolPersona(sub, todosMiembros, nivel + 1);
                 });
-                html += `</div>`;
             }
 
-            html += `</div>`;
+            html += '</div>';
             return html;
         }
-
-        // Inicializar
-        mostrarVista('directorio');
     </script>
 </body>
 </html>
