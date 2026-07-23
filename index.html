@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGEP - Sistema de Gestión de Perfiles</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        ::-webkit-scrollbar { width: 8px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -23,23 +28,27 @@
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
         .org-node:hover {
             background: #e0e7ff;
             box-shadow: 0 6px 16px rgba(0,0,0,0.15);
             transform: translateY(-2px);
         }
+        
         .org-node-title {
             font-weight: bold;
             color: #0f172a;
             font-size: 13px;
             margin-bottom: 3px;
         }
+        
         .org-node-puesto {
             font-size: 11px;
             color: #64748b;
             font-style: italic;
             margin-bottom: 3px;
         }
+        
         .org-node-grupo {
             font-size: 10px;
             background: #fee2e2;
@@ -49,10 +58,20 @@
             display: inline-block;
             font-weight: 600;
         }
+        
         .org-tree-level {
             margin-left: 20px;
             padding-left: 15px;
             border-left: 2px solid #cbd5e1;
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
@@ -65,16 +84,16 @@
             <p class="text-xs text-slate-400 mt-1">Base de Datos Local</p>
         </div>
         <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a href="javascript:void(0)" id="navDirectorio" onclick="mostrarVista('directorio')" class="flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-2"></path></svg>
+            <a href="javascript:void(0)" id="navDirectorio" onclick="mostrarVista('directorio')" class="flex items-center space-x-3 bg-blue-600/20 text-blue-400 px-4 py-3 rounded-lg transition hover:bg-blue-600/30">
+                <i class="fas fa-users text-lg"></i>
                 <span class="font-medium">Directorio</span>
             </a>
             <a href="javascript:void(0)" id="navEstadisticas" onclick="mostrarVista('estadisticas')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6"></path></svg>
+                <i class="fas fa-chart-bar text-lg"></i>
                 <span class="font-medium">Estadísticas</span>
             </a>
             <a href="javascript:void(0)" id="navOrganizacional" onclick="mostrarVista('organizacional')" class="flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-3 rounded-lg transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.217m-7.783 0h5.214m0 0a1 1 0 001.366.366l1.4-1m-2.766 2.634h-.183a2 2 0 01-2-2v-2.5"></path></svg>
+                <i class="fas fa-project-diagram text-lg"></i>
                 <span class="font-medium">Estructura Org.</span>
             </a>
 
@@ -83,12 +102,12 @@
             </div>
 
             <button onclick="exportarDatos()" class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"></path></svg>
+                <i class="fas fa-download text-green-400 text-lg"></i>
                 <span class="font-medium text-sm">Exportar Respaldo</span>
             </button>
 
             <label class="w-full flex items-center space-x-3 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-lg transition text-left cursor-pointer">
-                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"></path></svg>
+                <i class="fas fa-upload text-yellow-400 text-lg"></i>
                 <span class="font-medium text-sm">Restaurar Respaldo</span>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importarDatos(event)">
             </label>
@@ -103,13 +122,11 @@
         <!-- Topbar -->
         <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0">
             <div class="relative w-full sm:w-96">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                 <input type="text" id="searchInput" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
             </div>
             <button onclick="abrirModalForm()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <i class="fas fa-plus"></i>
                 Nuevo Registro
             </button>
         </header>
@@ -121,22 +138,42 @@
                 <p class="text-sm text-slate-500 mt-1">Resumen de la base de datos</p>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Total Registros</span>
-                    <span id="stat_total" class="text-3xl font-black text-slate-800">0</span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-500 uppercase">Total</span>
+                            <span id="stat_total" class="text-3xl font-black text-slate-800 block">0</span>
+                        </div>
+                        <i class="fas fa-users text-blue-400 text-4xl opacity-20"></i>
+                    </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Grupos</span>
-                    <span id="stat_grupos" class="text-3xl font-black text-red-700">0</span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-500 uppercase">Grupos</span>
+                            <span id="stat_grupos" class="text-3xl font-black text-red-700 block">0</span>
+                        </div>
+                        <i class="fas fa-sitemap text-red-400 text-4xl opacity-20"></i>
+                    </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Zonas</span>
-                    <span id="stat_zonas" class="text-3xl font-black text-blue-700">0</span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-500 uppercase">Zonas</span>
+                            <span id="stat_zonas" class="text-3xl font-black text-blue-700 block">0</span>
+                        </div>
+                        <i class="fas fa-map text-blue-400 text-4xl opacity-20"></i>
+                    </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border p-5">
-                    <span class="text-xs font-bold text-slate-500 uppercase mb-1 block">Edad Prom.</span>
-                    <span id="stat_edad" class="text-3xl font-black text-green-700">—</span>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-500 uppercase">Edad Prom.</span>
+                            <span id="stat_edad" class="text-3xl font-black text-green-700 block">—</span>
+                        </div>
+                        <i class="fas fa-birthday-cake text-green-400 text-4xl opacity-20"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -145,18 +182,21 @@
         <div id="vistaOrganizacional" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50">
             <div class="px-6 py-4 border-b bg-white shadow-sm shrink-0 flex items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-black text-slate-800">Estructura Organizacional - FBI</h2>
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-project-diagram text-blue-600"></i>
+                        Estructura Organizacional - FBI
+                    </h2>
                     <p class="text-xs text-slate-500 mt-1">Jerarquía por grupo delictivo</p>
                 </div>
-                <select id="orgSelectGrupo" onchange="actualizarEstructuraOrganizacional()" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+                <select id="orgSelectGrupo" onchange="actualizarEstructuraOrganizacional()" class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white font-medium">
                     <option value="">Seleccionar grupo...</option>
                 </select>
             </div>
             <div id="orgTreeContainer" class="flex-1 overflow-auto p-6">
                 <div id="orgVacio" class="flex items-center justify-center h-full text-slate-400">
                     <div class="text-center">
-                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"></path></svg>
-                        <p class="text-lg font-semibold">Selecciona un grupo</p>
+                        <i class="fas fa-sitemap text-6xl opacity-20 block mb-4"></i>
+                        <p class="text-lg font-semibold">Selecciona un grupo para ver la estructura</p>
                     </div>
                 </div>
                 <div id="orgTree" class="space-y-4"></div>
@@ -169,17 +209,27 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Perfil</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden sm:table-cell">Datos</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden lg:table-cell">Zona</th>
-                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                                <i class="fas fa-user mr-2"></i>Perfil
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden sm:table-cell">
+                                <i class="fas fa-building mr-2"></i>Datos
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase hidden lg:table-cell">
+                                <i class="fas fa-map-marker mr-2"></i>Zona
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">
+                                <i class="fas fa-cog mr-2"></i>Acciones
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tablaBody" class="bg-white divide-y divide-gray-200">
                     </tbody>
                 </table>
                 <div id="emptyState" class="hidden p-10 text-center text-gray-500">
+                    <i class="fas fa-inbox text-5xl opacity-20 block mb-4"></i>
                     <p class="text-lg font-medium">No hay registros</p>
+                    <p class="text-sm mt-2">Haz clic en "Nuevo Registro" para comenzar</p>
                 </div>
             </div>
         </div>
@@ -187,11 +237,14 @@
 
     <!-- Modal Formulario -->
     <div id="modalForm" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
-                <h2 class="text-xl font-bold text-gray-800">Nuevo Registro</h2>
-                <button onclick="cerrarModalForm()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300" id="modalFormContent">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-xl text-white">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i>
+                    <span id="modalTitle">Nuevo Registro</span>
+                </h2>
+                <button onclick="cerrarModalForm()" class="text-white hover:bg-white/20 rounded-lg p-1 transition">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
@@ -199,37 +252,53 @@
                 <form id="personaForm" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Nombre Completo *</label>
-                            <input type="text" id="f_nombre" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-user-circle text-blue-600 mr-1"></i>Nombre Completo *
+                            </label>
+                            <input type="text" id="f_nombre" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Alias</label>
-                            <input type="text" id="f_alias" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-mask text-purple-600 mr-1"></i>Alias
+                            </label>
+                            <input type="text" id="f_alias" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Grupo Delictivo *</label>
-                            <input type="text" id="f_grupo" class="w-full p-2 border border-red-300 rounded focus:ring-2 focus:ring-red-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-building text-red-600 mr-1"></i>Grupo Delictivo *
+                            </label>
+                            <input type="text" id="f_grupo" class="w-full p-3 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Ej. Cartel del Norte">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Función/Puesto</label>
-                            <input type="text" id="f_funcion" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-briefcase text-green-600 mr-1"></i>Función/Puesto
+                            </label>
+                            <input type="text" id="f_funcion" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej. Jefe de Operaciones">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Mando Directo (Jefe)</label>
-                            <input type="text" id="f_mando" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-crown text-yellow-600 mr-1"></i>Mando Directo (Jefe)
+                            </label>
+                            <input type="text" id="f_mando" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nombre del jefe">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Zona de Operación</label>
-                            <input type="text" id="f_zona" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt text-orange-600 mr-1"></i>Zona de Operación
+                            </label>
+                            <input type="text" id="f_zona" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej. Monterrey">
                         </div>
                     </div>
                     <input type="hidden" id="registroId">
                 </form>
             </div>
 
-            <div class="px-6 py-4 border-t bg-gray-100 rounded-b-xl flex justify-end gap-3">
-                <button onclick="cerrarModalForm()" class="px-5 py-2 text-gray-700 bg-white border rounded hover:bg-gray-50">Cancelar</button>
-                <button onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">Guardar</button>
+            <div class="px-6 py-4 border-t bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                <button onclick="cerrarModalForm()" class="px-5 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-100 transition font-medium flex items-center gap-2">
+                    <i class="fas fa-times"></i>Cancelar
+                </button>
+                <button onclick="guardarRegistro()" class="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold flex items-center gap-2">
+                    <i class="fas fa-save"></i>Guardar
+                </button>
             </div>
         </div>
     </div>
@@ -243,7 +312,11 @@
         window.onload = function() {
             const storedData = localStorage.getItem('sigep_data');
             if (storedData) {
-                personas = JSON.parse(storedData);
+                try {
+                    personas = JSON.parse(storedData);
+                } catch(e) {
+                    personas = [];
+                }
             }
             renderTable();
             document.getElementById('searchInput').addEventListener('input', renderTable);
@@ -277,8 +350,9 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             const bgClass = tipo === 'success' ? 'bg-green-600' : 'bg-red-600';
-            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg`;
-            toast.textContent = msg;
+            const icon = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg toast flex items-center gap-2`;
+            toast.innerHTML = `<i class="fas ${icon}"></i><span>${msg}</span>`;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
@@ -300,12 +374,20 @@
                 emptyState.classList.add('hidden');
                 filtrados.forEach(p => {
                     const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 transition';
                     tr.innerHTML = `
-                        <td class="px-6 py-4">${p.nombre || 'SIN NOMBRE'}</td>
-                        <td class="px-6 py-4 hidden sm:table-cell">${p.grupo || '-'}</td>
-                        <td class="px-6 py-4 hidden lg:table-cell">${p.zona || '-'}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-gray-900">${p.nombre || 'SIN NOMBRE'}</div>
+                            ${p.alias ? `<div class="text-xs text-red-600 font-semibold">"${p.alias}"</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 hidden sm:table-cell">
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">${p.grupo || '-'}</span>
+                        </td>
+                        <td class="px-6 py-4 hidden lg:table-cell text-gray-600">${p.zona || '-'}</td>
                         <td class="px-6 py-4 text-center">
-                            <button onclick="editarPersona('${p.id}')" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">Editar</button>
+                            <button onclick="editarPersona('${p.id}')" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition font-bold flex items-center justify-center gap-1 mx-auto">
+                                <i class="fas fa-edit"></i>Editar
+                            </button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -328,15 +410,19 @@
         function abrirModalForm() {
             document.getElementById('personaForm').reset();
             document.getElementById('registroId').value = '';
+            document.getElementById('modalTitle').textContent = 'Nuevo Registro';
             const modal = document.getElementById('modalForm');
-            modal.classList.remove('hidden');
+            const content = document.getElementById('modalFormContent');
+            modal.classList.remove('hidden', 'opacity-0');
             setTimeout(() => {
-                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
             }, 10);
         }
 
         function cerrarModalForm() {
             const modal = document.getElementById('modalForm');
+            const content = document.getElementById('modalFormContent');
+            content.classList.add('scale-95');
             modal.classList.add('opacity-0');
             setTimeout(() => {
                 modal.classList.add('hidden');
@@ -352,8 +438,9 @@
                 return;
             }
 
+            const registroId = document.getElementById('registroId').value;
             const persona = {
-                id: document.getElementById('registroId').value || 'SIGEP-' + Math.random().toString(36).substr(2, 9),
+                id: registroId || 'SIGEP-' + Math.random().toString(36).substr(2, 9),
                 nombre: nombre.toUpperCase(),
                 alias: document.getElementById('f_alias').value,
                 grupo: grupo,
@@ -365,14 +452,15 @@
             const idx = personas.findIndex(p => p.id === persona.id);
             if (idx >= 0) {
                 personas[idx] = persona;
+                showToast('Registro actualizado');
             } else {
                 personas.push(persona);
+                showToast('Registro creado');
             }
 
             localStorage.setItem('sigep_data', JSON.stringify(personas));
             renderTable();
             cerrarModalForm();
-            showToast('Registro guardado');
         }
 
         function editarPersona(id) {
@@ -386,6 +474,7 @@
             document.getElementById('f_mando').value = persona.mando || '';
             document.getElementById('f_zona').value = persona.zona || '';
             document.getElementById('registroId').value = id;
+            document.getElementById('modalTitle').textContent = 'Editar Registro';
 
             abrirModalForm();
         }
@@ -417,10 +506,12 @@
                         personas = importado;
                         localStorage.setItem('sigep_data', JSON.stringify(personas));
                         renderTable();
-                        showToast('Base restaurada');
+                        showToast('Base restaurada correctamente');
+                    } else {
+                        showToast('Formato inválido', 'error');
                     }
-                } catch {
-                    showToast('Error en archivo', 'error');
+                } catch (err) {
+                    showToast('Error al leer el archivo', 'error');
                 }
             };
             reader.readAsText(file);
@@ -456,18 +547,25 @@
 
             const miembros = personas.filter(p => p.grupo === grupo);
             if (miembros.length === 0) {
-                container.innerHTML = '<p class="text-slate-500">Sin miembros</p>';
+                container.innerHTML = '<p class="text-slate-500 text-center py-8">Sin miembros en este grupo</p>';
                 return;
             }
 
-            const jefes = miembros.filter(p => !p.mando || p.mando === '');
+            const jefes = miembros.filter(p => !p.mando || p.mando.trim() === '');
+            if (jefes.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-8">No hay jefes sin mando superior</p>';
+                return;
+            }
+            
             const html = jefes.map(jefe => construirArbolPersona(jefe, miembros)).join('');
-
             container.innerHTML = html;
         }
 
         function construirArbolPersona(persona, todosMiembros, nivel = 0) {
-            const subordinados = todosMiembros.filter(p => p.mando && p.mando.toUpperCase() === persona.nombre.toUpperCase());
+            const subordinados = todosMiembros.filter(p => 
+                p.mando && p.mando.trim() !== '' && 
+                p.mando.toUpperCase() === persona.nombre.toUpperCase()
+            );
 
             let html = `<div class="${nivel > 0 ? 'org-tree-level' : ''}">
                 <div class="org-node">
